@@ -1069,18 +1069,25 @@
       return `<div class="rank-list">${items.map(it => `<div class="hbar-row"><span class="hbar-lbl">${it.label}${it.active ? " ✓" : ""}</span><div class="hbar-track"><i style="width:${Math.max(3, it.val / it.max * 100).toFixed(0)}%;background:${it.colorVar || "var(--brand)"}"></i></div><b>${it.valText}</b></div>`).join("")}</div>`;
     }
 
-    // day × time-of-day density heatmap (sequential single-hue ramp)
-    function heatmap() {
+    // day × time-of-day density heatmap (sequential single-hue ramp, scope-aware)
+    const HEAT = {
+      a: [[3,3,3,3,4,4,3],[5,4,5,5,6,6,5],[6,6,6,6,7,8,7],[4,4,4,4,5,6,6],[6,5,6,6,7,7,6],[7,7,7,7,8,8,7],[8,8,8,8,9,7,6],[9,9,9,9,10,6,5],[10,10,10,10,10,5,4],[9,9,9,9,10,4,2]],
+      b: [[4,4,5,4,5,3,2],[6,6,6,6,7,4,3],[7,7,7,7,8,5,3],[5,5,5,5,6,4,3],[6,6,7,6,7,5,3],[7,7,7,7,8,4,3],[6,6,6,6,7,3,2],[5,5,5,5,6,3,2],[4,4,4,4,5,2,1],[3,3,3,3,4,1,1]],
+      c: [[1,1,2,1,2,4,4],[2,2,2,2,3,6,6],[3,3,3,3,4,8,8],[2,2,2,2,3,7,7],[3,3,3,3,4,7,7],[4,3,4,4,5,8,7],[4,4,4,4,5,7,6],[5,4,5,5,6,6,5],[5,5,5,5,6,5,4],[4,4,4,4,5,4,3]]
+    };
+    function heatmap(scope) {
       const days = ["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"];
       const hours = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
-      const M = [[2,2,3,2,3,5,4],[4,3,4,4,5,7,6],[5,5,5,5,6,9,8],[3,3,3,3,4,6,7],[4,4,5,4,5,8,7],[6,5,6,6,7,9,8],[7,6,7,7,8,8,6],[8,7,8,8,9,7,5],[9,8,9,9,10,6,4],[7,7,8,8,9,4,2]];
-      const max = 10;
+      const M = (scope === "a" || scope === "b" || scope === "c")
+        ? HEAT[scope]
+        : HEAT.a.map((row, r) => row.map((_, c) => HEAT.a[r][c] + HEAT.b[r][c] + HEAT.c[r][c]));
+      const max = Math.max(...M.flat()) || 1;
       const ramp = ["var(--surface-soft)", "#cfe7df", "#93d0bb", "#4fae92", "#1f7d66", "#0f4a3c"];
       const bucket = v => v <= 0 ? 0 : Math.min(5, Math.ceil(v / max * 5));
       let cells = `<div class="heat-corner"></div>` + days.map(d => `<div class="heat-day">${d}</div>`).join("");
       hours.forEach((h, ri) => {
         cells += `<div class="heat-hour">${h}</div>`;
-        M[ri].forEach((v, ci) => { const b = bucket(v); cells += `<div class="heat-cell" style="background:${ramp[b]};color:${b >= 3 ? "#fff" : "var(--muted)"}" title="${days[ci]} ${h} · เฉลี่ย ${v} นัด">${v || ""}</div>`; });
+        M[ri].forEach((v, ci) => { const b = bucket(v); cells += `<div class="heat-cell" style="background:${ramp[b]};color:${b >= 3 ? "#fff" : "var(--muted)"}" title="${days[ci]} ${h} · ${v} นัด/สัปดาห์">${v || ""}</div>`; });
       });
       const legend = ramp.map(c => `<span class="heat-sw" style="background:${c}"></span>`).join("");
       return `<div class="heat-scroll"><div class="heat-grid">${cells}</div></div><div class="heat-legend"><span>น้อย</span>${legend}<span>มาก</span></div>`;
@@ -1115,7 +1122,7 @@
         <section class="card card-pad"><div class="card-head"><div><h2>สัดส่วนรายรับตามสาขา</h2><p>เดือนนี้ · เรียงจากมากไปน้อย</p></div><span class="badge">source: payments</span></div>${rankBars(revBranch.map(b => ({ label: branchName(b.k), val: b.val, max: maxRev, valText: fmtK(b.val) + " · " + (b.val / (FIN.all.rev[5]) * 100).toFixed(0) + "%", active: b.k === scope })))}</section>
         <section class="card card-pad"><div class="card-head"><div><h2>สัดส่วนตามกลุ่มบริการ</h2><p>ทั้งเครือ · ข้อมูลตัวอย่าง</p></div><span class="pending-def">${icon("shield", 11)}รอนิยาม catalog</span></div>${rankBars(mix.map(m => ({ label: m[0], val: m[1], max: maxMix, valText: m[1] + "%" })))}</section>
       </div>
-      <section class="card card-pad page-section"><div class="card-head"><div><h2>ความหนาแน่นนัดหมายตามวัน–เวลา</h2><p>ทั้งเครือ · ค่าเฉลี่ยต่อช่วงเวลา · ข้อมูลตัวอย่าง</p></div><span class="pending-def">${icon("shield", 11)}รอข้อมูลจริงจาก scheduling</span></div>${heatmap()}<div class="section-kicker" style="margin-top:10px">ใช้วางแผนกำลังคน/เก้าอี้และรอบโปรโมชัน — ช่วงเย็นวันธรรมดาและกลางวันวันหยุดหนาแน่นที่สุด</div></section>
+      <section class="card card-pad page-section"><div class="card-head"><div><h2>ความหนาแน่นนัดหมายตามวัน–เวลา</h2><p>${scopeName} · นัด/สัปดาห์ต่อช่วงเวลา · ข้อมูลตัวอย่าง</p></div><span class="pending-def">${icon("shield", 11)}รอข้อมูลจริงจาก scheduling</span></div>${heatmap(scope)}<div class="section-kicker" style="margin-top:10px">ใช้วางแผนกำลังคน/เก้าอี้และรอบโปรโมชัน — สลับสาขาที่ตัวเลือกด้านบนเพื่อดูรูปแบบของแต่ละสาขา (สยามพีคเย็นวันธรรมดา · อีกสาขากลางวัน · อีกสาขาวันหยุด)</div></section>
       <div class="prototype-footer">Analytics เป็น synthetic demo · นิยาม metric (return rate, service mix, ARPV) และ catalog กลุ่มบริการต้องอนุมัติก่อนใช้เป็น KPI จริง · Export ต้องมี watermark ของ scope และ timestamp</div>`;
     }
 
