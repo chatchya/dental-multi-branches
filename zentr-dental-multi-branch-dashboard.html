@@ -549,6 +549,8 @@
     .hbar-track i { display: block; height: 100%; border-radius: 99px; }
     .hbar-row b { text-align: right; font-size: 12px; }
     .pending-def { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; letter-spacing: .03em; color: #3e6888; background: var(--info-soft); padding: 2px 8px; border-radius: 99px; }
+    .rank-list .hbar-row:last-child { margin-bottom: 0; }
+    .rank-list .hbar-row { grid-template-columns: 150px 1fr 118px; }
 
     .inbox-layout { display: grid; grid-template-columns: 286px minmax(0, 1fr) 300px; gap: 0; min-height: 610px; overflow: hidden; }
     .inbox-list, .inbox-context { background: var(--surface-soft); }
@@ -769,6 +771,7 @@
         <div class="nav-label">ทำงาน</div>
         <nav class="nav-list">
           <button class="nav-item active" data-view="dashboard"><span class="nav-icon" data-icon="overview"></span><span>ภาพรวมเครือคลินิก</span></button>
+          <button class="nav-item" data-view="analytics"><span class="nav-icon" data-icon="analytics"></span><span>Analytics</span></button>
           <button class="nav-item" data-view="labs"><span class="nav-icon" data-icon="lab"></span><span>งานแล็บ</span><span class="nav-count">3</span></button>
           <button class="nav-item" data-view="inbox"><span class="nav-icon" data-icon="inbox"></span><span>Inbox</span><span class="nav-count">6</span></button>
         </nav>
@@ -915,6 +918,7 @@
       tooth: '<path d="M8.2 5.2C6.8 3.3 3.5 4.2 3.4 7.1c-.1 2.5 1.4 3.5 1.7 6.5.4 4.1 1.4 6.6 3 6.6 1.4 0 1.4-4.2 3.9-4.2s2.5 4.2 3.9 4.2c1.6 0 2.6-2.5 3-6.6.3-3 1.8-4 1.7-6.5-.1-2.9-3.4-3.8-4.8-1.9-1.1 1.5-2.2-.1-3.8-.1s-2.7 1.6-3.8.1Z"/>',
       finance: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>',
       reports: '<path d="M4 19V9M10 19V5M16 19v-8M22 19H2"/>',
+      analytics: '<path d="M4 20V4M4 20h16M8 16l4-5 3 3 5-7"/><circle cx="8" cy="16" r="1.3"/><circle cx="12" cy="11" r="1.3"/><circle cx="15" cy="14" r="1.3"/><circle cx="20" cy="7" r="1.3"/>',
       settings: '<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="4"/>',
       shield: '<path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/>',
       menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -1032,6 +1036,62 @@
       });
     }
 
+    // static line chart (trend) with direct endpoint labels
+    function lineChart(vals, labels, unit) {
+      const W = 680, H = 210, padL = 40, padR = 16, padT = 20, padB = 28;
+      const plotW = W - padL - padR, plotH = H - padT - padB, base = padT + plotH;
+      const mn = Math.min(...vals), mx = Math.max(...vals);
+      const lo = Math.floor((mn - 2) / 5) * 5, hi = Math.ceil((mx + 2) / 5) * 5;
+      const rng = (hi - lo) || 1, n = vals.length, dx = plotW / (n - 1);
+      const y = v => base - ((v - lo) / rng) * plotH;
+      const pts = vals.map((v, i) => [padL + dx * i, y(v)]);
+      const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+      const area = line + ` L${(padL + plotW).toFixed(1)} ${base} L${padL} ${base} Z`;
+      let g = "";
+      [lo, (lo + hi) / 2, hi].forEach(val => { const yy = y(val); g += `<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${W - padR}" y2="${yy.toFixed(1)}" stroke="var(--border)" stroke-width="1"/><text x="${padL - 8}" y="${(yy + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)">${val.toFixed(0)}${unit || ""}</text>`; });
+      g += `<path d="${area}" fill="var(--brand)" opacity="0.10"/><path d="${line}" fill="none" stroke="var(--brand)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+      pts.forEach((p, i) => { g += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === n - 1 ? 4 : 3}" fill="var(--brand)"/>`; });
+      g += `<text x="${pts[0][0].toFixed(1)}" y="${(pts[0][1] - 9).toFixed(1)}" text-anchor="start" font-size="11" font-weight="700" fill="var(--brand-deep)">${vals[0].toFixed(1)}${unit || ""}</text>`;
+      g += `<text x="${pts[n - 1][0].toFixed(1)}" y="${(pts[n - 1][1] - 9).toFixed(1)}" text-anchor="end" font-size="11" font-weight="700" fill="var(--brand-deep)">${vals[n - 1].toFixed(1)}${unit || ""}</text>`;
+      labels.forEach((l, i) => { g += `<text x="${pts[i][0].toFixed(1)}" y="${base + 17}" text-anchor="middle" font-size="11" fill="var(--muted)">${l}</text>`; });
+      return `<div class="zchart-wrap"><svg class="zchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="แนวโน้ม (ข้อมูลตัวอย่าง)">${g}</svg></div>`;
+    }
+    function rankBars(items) {
+      return `<div class="rank-list">${items.map(it => `<div class="hbar-row"><span class="hbar-lbl">${it.label}${it.active ? " ✓" : ""}</span><div class="hbar-track"><i style="width:${Math.max(3, it.val / it.max * 100).toFixed(0)}%;background:${it.colorVar || "var(--brand)"}"></i></div><b>${it.valText}</b></div>`).join("")}</div>`;
+    }
+
+    function renderAnalytics() {
+      const scope = state.branch;
+      const F = FIN[scope] || FIN.all;
+      const o = BRANCHOPS[scope] || BRANCHOPS.all;
+      const scopeName = currentBranch().label;
+      const rates = F.rev.map((r, i) => F.col[i] / r * 100);
+      const totalRev = F.rev.reduce((a, c) => a + c, 0);
+      const growth = (F.rev[5] - F.rev[4]) / F.rev[4] * 100;
+      const arpv = Math.round(F.rev[5] * 1000 / o.appts);
+      const revBranch = ["a", "b", "c"].map(k => ({ k, val: FIN[k].rev[5] })).sort((x, y) => y.val - x.val);
+      const maxRev = Math.max(...revBranch.map(x => x.val));
+      const mix = [["ทันตกรรมทั่วไป", 34], ["จัดฟัน", 26], ["ทันตกรรมประดิษฐ์ / แล็บ", 18], ["รากเทียม", 14], ["อื่น ๆ", 8]];
+      const maxMix = Math.max(...mix.map(m => m[1]));
+      const growthPill = `<span class="fin-delta ${growth >= 0 ? "up" : "down"}">${growth >= 0 ? "▲" : "▼"} ${Math.abs(growth).toFixed(1)}%</span>`;
+      return `${pageHeader("ANALYTICS", "Analytics เชิงลึก", "วิเคราะห์แนวโน้มรายรับ อัตราเก็บเงิน สัดส่วนสาขาและกลุ่มบริการ เพื่อการตัดสินใจเชิงกลยุทธ์", `<button class="secondary-btn" data-action="export-blocked"><span data-icon="shield"></span>Export ตามสิทธิ์</button><button class="primary-btn" data-view="reports"><span data-icon="reports"></span>ไปที่รายงาน</button>`)}${contextBanner()}
+      <div class="metric-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        ${metricMini("รายรับสะสม 6 เดือน", fmtK(totalRev), "finance", "รวมช่วงที่วิเคราะห์")}
+        ${metricMini("อัตราเก็บเงินเฉลี่ย", F.rate, "finance", "collection efficiency")}
+        ${metricMini("เติบโต MoM", (growth >= 0 ? "+" : "") + growth.toFixed(1) + "%", "reports", growthPill + " เทียบเดือนก่อน")}
+        ${metricMini("มูลค่าเฉลี่ยต่อนัด", "฿ " + arpv.toLocaleString("th-TH"), "patients", "รายรับ ÷ จำนวนนัด")}
+      </div>
+      <div class="grid-2">
+        <section class="card card-pad exec-card"><div class="exec-card-head"><div><h2>รายรับ · รับชำระ · ยอดค้าง</h2><p>${scopeName} · 6 เดือนล่าสุด</p></div><span class="badge">ล้านบาท</span></div><div class="zlegend"><span><i style="background:var(--c-collect)"></i>รับชำระ</span><span><i style="background:var(--c-out)"></i>ยอดค้างในงวด</span></div>${stackedChart("ana", F.rev, F.col)}</section>
+        <section class="card card-pad"><div class="card-head"><div><h2>แนวโน้มอัตราเก็บเงิน</h2><p>collection rate 6 เดือน · ${scopeName}</p></div><span class="badge">%</span></div>${lineChart(rates, MLAB6, "%")}<div class="section-kicker" style="margin-top:6px">อัตราเก็บเงิน = รับชำระ ÷ รายรับ ในงวดนั้น</div></section>
+      </div>
+      <div class="grid-2">
+        <section class="card card-pad"><div class="card-head"><div><h2>สัดส่วนรายรับตามสาขา</h2><p>เดือนนี้ · เรียงจากมากไปน้อย</p></div><span class="badge">source: payments</span></div>${rankBars(revBranch.map(b => ({ label: branchName(b.k), val: b.val, max: maxRev, valText: fmtK(b.val) + " · " + (b.val / (FIN.all.rev[5]) * 100).toFixed(0) + "%", active: b.k === scope })))}</section>
+        <section class="card card-pad"><div class="card-head"><div><h2>สัดส่วนตามกลุ่มบริการ</h2><p>ทั้งเครือ · ข้อมูลตัวอย่าง</p></div><span class="pending-def">${icon("shield", 11)}รอนิยาม catalog</span></div>${rankBars(mix.map(m => ({ label: m[0], val: m[1], max: maxMix, valText: m[1] + "%" })))}</section>
+      </div>
+      <div class="prototype-footer">Analytics เป็น synthetic demo · นิยาม metric (return rate, service mix, ARPV) และ catalog กลุ่มบริการต้องอนุมัติก่อนใช้เป็น KPI จริง · Export ต้องมี watermark ของ scope และ timestamp</div>`;
+    }
+
     function renderDashboard() {
       return renderExecutiveDashboard();
       const appts = visibleAppointments();
@@ -1119,21 +1179,6 @@
         <section class="card card-pad"><div class="exec-card-head"><div><h2>Risk signals</h2><p>รายการที่ควรดูต่อโดยเจ้าของงาน</p></div><button class="action-link" data-view="labs">ดู risk ทั้งหมด</button></div><div class="exec-risk-list"><div class="exec-risk-row"><div><strong>งานแล็บใกล้หลุด buffer</strong><span>${labRisk ? `${labRisk} รายการ · นัดใส่ใน 3 วัน` : "ไม่พบรายการใน scope"}</span></div>${labRisk ? status("ต้องดู", "risk") : status("ปกติ", "confirmed")}</div><div class="exec-risk-row"><div><strong>ยอดค้างที่ต้องติดตาม</strong><span>${totals.outstanding} · ตามสิทธิ์ Finance</span></div><span class="status pending"><span class="status-dot"></span>ติดตาม</span></div><div class="exec-risk-row"><div><strong>Recall ยังไม่ได้นัด</strong><span>${state.branch === "all" ? "06" : "02"} คนไข้ · ตรวจ owner และ channel</span></div><span class="status pending"><span class="status-dot"></span>ติดตาม</span></div></div></section>
       </div>
       <div class="prototype-footer">ข้อมูลทั้งหมดเป็น synthetic demo · metric, policy, สิทธิ์ และตัวเลขจริงต้องเชื่อม server และผ่านการอนุมัติก่อนใช้ production</div>`;
-    }
-
-    function renderSchedule() {
-      const appts = visibleAppointments();
-      const cardFor = (time, resource, extraClass = "") => {
-        const appt = appts.find(a => a.time === time && a.chair === resource);
-        return appt ? `<button class="appointment-card ${extraClass || (appt.statusClass === "pending" ? "pending" : "")}" data-appointment="${appt.id}"><strong>${appt.patient}</strong><span>${appt.procedure} · ${appt.duration}</span><span>${appt.status} · ${branchName(appt.branch)}</span></button>` : `<span class="schedule-empty">—</span>`;
-      };
-      return `${pageHeader("BOOKING + QUEUE", "นัดหมายและคิว", "ตารางเดียวสำหรับเคาน์เตอร์, LINE OA และ Website Chat พร้อม resource ที่ต้องว่างพร้อมกัน", `<div class="segmented"><button class="active">วัน</button><button>สัปดาห์</button><button>เดือน</button></div><button class="primary-btn" data-action="create-appointment"><span data-icon="plus"></span>สร้างนัดหมาย</button>`)}${contextBanner()}${commonFilterRow(`<select class="filter-select" aria-label="กรองตามเก้าอี้"><option>เก้าอี้ทุกตัว</option><option>เก้าอี้ 01</option><option>เก้าอี้ 02</option></select><select class="filter-select" aria-label="กรองตามช่องทาง"><option>ทุกช่องทาง</option><option>LINE OA</option><option>Website Chat</option></select>`)}
-      <div class="schedule-layout"><section class="card schedule-board"><div style="overflow-x:auto"><div class="schedule-header"><div>resource / เวลา</div><div>09:00</div><div>10:00</div><div>11:00</div><div>13:00</div><div>14:30</div></div><div class="resource-row"><div class="resource-label"><strong>สาขา A · เก้าอี้ 01</strong><span>ผู้ให้บริการสมมติ A</span></div><div class="resource-cell">${cardFor("09:00", "เก้าอี้ 01")}</div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">—</div></div><div class="resource-row"><div class="resource-label"><strong>สาขา A · เก้าอี้ 02</strong><span>ผู้ให้บริการสมมติ B</span></div><div class="resource-cell">—</div><div class="resource-cell">${cardFor("10:30", "เก้าอี้ 02")}</div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">—</div></div><div class="resource-row"><div class="resource-label"><strong>สาขา B · เก้าอี้ 01</strong><span>ผู้ให้บริการสมมติ C</span></div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">${cardFor("11:00", "เก้าอี้ 01")}</div><div class="resource-cell">—</div><div class="resource-cell">—</div></div><div class="resource-row"><div class="resource-label"><strong>สาขา C · เก้าอี้ 03</strong><span>ผู้ให้บริการสมมติ A</span></div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">${cardFor("13:00", "เก้าอี้ 03")}</div><div class="resource-cell">—</div></div></div></section><aside class="schedule-aside"><section class="card card-pad"><div class="card-head"><div><h2>สถานะนัดหมาย</h2><p>ใช้ข้อความ + สี + icon ร่วมกัน</p></div></div><div class="legend-list"><div class="legend-row"><span class="legend-swatch"></span>ยืนยันแล้ว</div><div class="legend-row"><span class="legend-swatch pending"></span>รอยืนยัน</div><div class="legend-row"><span class="legend-swatch completed"></span>เสร็จสิ้น</div><div class="legend-row"><span class="legend-swatch block"></span>เตรียม / ฆ่าเชื้อ</div></div></section><section class="card card-pad"><div class="card-head"><div><h2>คิวหน้างาน</h2><p>${state.branch === "all" ? "เลือกสาขาก่อนเปลี่ยนสถานะ" : `กำลังดู ${branchName(state.branch)}`}</p></div><button class="action-link" data-action="open-queue">เปิดคิว</button></div><div class="task-list"><div class="task-item"><span class="task-marker"></span><div class="task-copy"><strong>รอเรียก 03</strong><span>ตัวจับเวลารอเริ่มแล้ว</span></div></div><div class="task-item"><span class="task-marker info"></span><div class="task-copy"><strong>อยู่บนเก้าอี้ 02</strong><span>เชื่อม encounter ปัจจุบัน</span></div></div></div></section></aside></div><div class="page-section"><div class="page-section-head"><div><h2>รายการนัดหมาย</h2><p>ทุกการยืนยันต้องตรวจและล็อกเก้าอี้ + ทันตแพทย์ที่ server</p></div><span class="badge">${appts.length} รายการใน scope</span></div><div class="table-wrap"><table><thead><tr><th>เวลา</th><th>คนไข้</th><th>หัตถการ</th><th>สาขา</th><th>resource</th><th>ช่องทาง</th><th>สถานะ</th></tr></thead><tbody>${appts.map(appt => `<tr class="clickable-row" data-appointment="${appt.id}"><td><strong>${appt.time}</strong><br><span style="font-size:10px;color:var(--muted)">${appt.duration}</span></td><td class="person-cell"><strong>${appt.patient}</strong><span>${appt.hn}</span></td><td>${appt.procedure}</td><td>${badge(branchName(appt.branch))}</td><td>${appt.chair}<br><span style="font-size:10px;color:var(--muted)">${appt.provider}</span></td><td>${badge(appt.source)}</td><td>${status(appt.status, appt.statusClass)}</td></tr>`).join("")}</tbody></table></div></div><div class="prototype-footer">เวลาเตรียม/พัก/ทำความสะอาดเป็น configuration ของสาขา · slot availability ต้องมาจาก server</div>`;
-    }
-
-    function renderQueue() {
-      const columns = [{ title: "รอเรียก", count: "03", items: ["ผู้รับบริการตัวอย่าง 02", "ผู้รับบริการตัวอย่าง 06"] }, { title: "เรียกแล้ว", count: "01", items: ["ผู้รับบริการตัวอย่าง 01"] }, { title: "อยู่บนเก้าอี้", count: "02", items: ["ผู้รับบริการตัวอย่าง 03", "ผู้รับบริการตัวอย่าง 07"] }, { title: "รอชำระเงิน", count: "01", items: ["ผู้รับบริการตัวอย่าง 04"] }, { title: "เสร็จสิ้น", count: "12", items: ["ผู้รับบริการตัวอย่าง 08"] }];
-      return `${pageHeader("QUEUE", "คิวหน้างาน", "เช็กอินและเคลื่อนสถานะตามงานจริง โดยไม่เปิดข้อมูลเกินสิทธิ์", `<button class="secondary-btn" data-view="schedule"><span data-icon="calendar"></span>กลับตาราง</button><button class="primary-btn" data-action="walk-in"><span data-icon="plus"></span>เพิ่ม walk-in</button>`)}${contextBanner()}${commonFilterRow(`<select class="filter-select" aria-label="กรองตามเก้าอี้"><option>เก้าอี้ทุกตัว</option><option>เก้าอี้ 01</option><option>เก้าอี้ 02</option></select>`)}<div class="queue-grid">${columns.map((column, index) => `<section class="queue-column"><div class="queue-column-head"><strong>${column.title}</strong><span>${column.count}</span></div><div class="queue-cards">${column.items.map((item, itemIndex) => `<div class="queue-card"><strong>${item}</strong><span>${itemIndex % 2 ? "walk-in · " : "10:30 · "}${index === 3 ? "ยอดคงเหลือตามสิทธิ์การเงิน" : "หัตถการสมมติ · เก้าอี้ 01"}</span><div class="queue-actions">${index === 0 ? `<button class="secondary-btn small-btn" data-action="queue-call">เรียก</button><button class="secondary-btn small-btn" data-action="queue-skip">ข้าม</button>` : index === 1 ? `<button class="secondary-btn small-btn" data-action="queue-recall">เรียกซ้ำ</button>` : index === 3 ? `<button class="primary-btn small-btn" data-view="finance">ส่งต่อการเงิน</button>` : `<button class="secondary-btn small-btn" data-action="queue-open">เปิดบริบท</button>`}</div></div>`).join("")}</div></section>`).join("")}</div><div class="card card-pad page-section"><div class="card-head"><div><h2>กติกาคิว</h2><p>walk-in, เรียกซ้ำ, ข้ามคิว และตัวจับเวลารอเป็น operation ของสาขาปัจจุบัน</p></div><span class="badge">ต้องเลือก branch ก่อนแก้สถานะ</span></div><div class="grid-3"><div class="protected-box" style="margin-top:0"><strong>${icon("lock", 14)} Check-in gate</strong><p>ยืนยันสาขาและนัดที่ถูกต้องก่อนสร้าง encounter</p></div><div class="protected-box" style="margin-top:0"><strong>${icon("refresh", 14)} Server response</strong><p>เปลี่ยนสถานะหลัง server ยืนยัน ไม่ใช้ optimistic state เป็น contract</p></div><div class="protected-box" style="margin-top:0"><strong>${icon("finance", 14)} Payment handoff</strong><p>ส่งต่อยอดคงเหลือโดยไม่เปิด clinical record เกิน role</p></div></div></div>`;
     }
 
     function renderPatients() {
@@ -1285,10 +1330,10 @@
     }
 
     function renderView() {
-      const views = { dashboard: renderDashboard, schedule: renderSchedule, queue: renderQueue, patients: renderPatients, treatment: renderTreatment, labs: renderLabs, finance: renderFinance, inbox: renderInbox, reports: renderReports, settings: renderSettings };
+      const views = { dashboard: renderDashboard, analytics: renderAnalytics, patients: renderPatients, treatment: renderTreatment, labs: renderLabs, finance: renderFinance, inbox: renderInbox, reports: renderReports, settings: renderSettings };
       const renderer = views[state.view] || renderDashboard;
       document.getElementById("appContent").innerHTML = renderer();
-      document.querySelectorAll(".nav-item").forEach(button => button.classList.toggle("active", button.dataset.view === state.view || (state.view === "queue" && button.dataset.view === "schedule")));
+      document.querySelectorAll(".nav-item").forEach(button => button.classList.toggle("active", button.dataset.view === state.view));
       hydrateIcons(document.getElementById("appContent"));
       bindDynamicActions();
       bindCharts(document.getElementById("appContent"));
@@ -1406,12 +1451,6 @@
         "view-reports": () => { state.view = "reports"; renderView(); },
         "open-tasks": () => { state.view = "labs"; renderView(); },
         "metric": () => toast(`เปิดรายการ: ${label || "metric"} · prototype action`),
-        "open-queue": () => { state.view = "queue"; renderView(); },
-        "walk-in": () => toast("Prototype: เพิ่ม walk-in ต้องยืนยัน branch และ identity ก่อน"),
-        "queue-call": () => toast("เรียกคิวแล้ว · ต้องมี server response ในระบบจริง"),
-        "queue-skip": () => toast("ข้ามคิวแล้ว · เหตุผลจะถูกบันทึกใน audit"),
-        "queue-recall": () => toast("เรียกซ้ำแล้ว · ตัวจับเวลารอคงอยู่"),
-        "queue-open": () => patientModal(),
         "new-patient": () => toast("Prototype: เปิด registration พร้อม duplicate review"),
         "duplicate-review": () => toast("Prototype: duplicate review ต้องไม่ลบหลักฐานเดิม"),
         "open-patient-detail": () => patientModal(),
