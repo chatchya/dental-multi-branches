@@ -551,6 +551,15 @@
     .pending-def { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; letter-spacing: .03em; color: #3e6888; background: var(--info-soft); padding: 2px 8px; border-radius: 99px; }
     .rank-list .hbar-row:last-child { margin-bottom: 0; }
     .rank-list .hbar-row { grid-template-columns: 150px 1fr 118px; }
+    /* --- day x time heatmap --- */
+    .heat-scroll { overflow-x: auto; }
+    .heat-grid { display: grid; grid-template-columns: 52px repeat(7, minmax(34px, 1fr)); gap: 3px; min-width: 360px; }
+    .heat-day { text-align: center; font-size: 11px; font-weight: 700; color: var(--ink-2); padding-bottom: 2px; }
+    .heat-hour { font-size: 10px; color: var(--muted); display: flex; align-items: center; font-variant-numeric: tabular-nums; }
+    .heat-cell { height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; transition: transform .1s; }
+    .heat-cell:hover { transform: scale(1.1); outline: 2px solid var(--brand-deep); position: relative; z-index: 2; }
+    .heat-legend { display: flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 11px; color: var(--muted); }
+    .heat-sw { width: 20px; height: 12px; border-radius: 3px; display: inline-block; }
 
     .inbox-layout { display: grid; grid-template-columns: 286px minmax(0, 1fr) 300px; gap: 0; min-height: 610px; overflow: hidden; }
     .inbox-list, .inbox-context { background: var(--surface-soft); }
@@ -1060,6 +1069,23 @@
       return `<div class="rank-list">${items.map(it => `<div class="hbar-row"><span class="hbar-lbl">${it.label}${it.active ? " ✓" : ""}</span><div class="hbar-track"><i style="width:${Math.max(3, it.val / it.max * 100).toFixed(0)}%;background:${it.colorVar || "var(--brand)"}"></i></div><b>${it.valText}</b></div>`).join("")}</div>`;
     }
 
+    // day × time-of-day density heatmap (sequential single-hue ramp)
+    function heatmap() {
+      const days = ["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"];
+      const hours = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+      const M = [[2,2,3,2,3,5,4],[4,3,4,4,5,7,6],[5,5,5,5,6,9,8],[3,3,3,3,4,6,7],[4,4,5,4,5,8,7],[6,5,6,6,7,9,8],[7,6,7,7,8,8,6],[8,7,8,8,9,7,5],[9,8,9,9,10,6,4],[7,7,8,8,9,4,2]];
+      const max = 10;
+      const ramp = ["var(--surface-soft)", "#cfe7df", "#93d0bb", "#4fae92", "#1f7d66", "#0f4a3c"];
+      const bucket = v => v <= 0 ? 0 : Math.min(5, Math.ceil(v / max * 5));
+      let cells = `<div class="heat-corner"></div>` + days.map(d => `<div class="heat-day">${d}</div>`).join("");
+      hours.forEach((h, ri) => {
+        cells += `<div class="heat-hour">${h}</div>`;
+        M[ri].forEach((v, ci) => { const b = bucket(v); cells += `<div class="heat-cell" style="background:${ramp[b]};color:${b >= 3 ? "#fff" : "var(--muted)"}" title="${days[ci]} ${h} · เฉลี่ย ${v} นัด">${v || ""}</div>`; });
+      });
+      const legend = ramp.map(c => `<span class="heat-sw" style="background:${c}"></span>`).join("");
+      return `<div class="heat-scroll"><div class="heat-grid">${cells}</div></div><div class="heat-legend"><span>น้อย</span>${legend}<span>มาก</span></div>`;
+    }
+
     function renderAnalytics() {
       const scope = state.branch;
       const F = FIN[scope] || FIN.all;
@@ -1089,6 +1115,7 @@
         <section class="card card-pad"><div class="card-head"><div><h2>สัดส่วนรายรับตามสาขา</h2><p>เดือนนี้ · เรียงจากมากไปน้อย</p></div><span class="badge">source: payments</span></div>${rankBars(revBranch.map(b => ({ label: branchName(b.k), val: b.val, max: maxRev, valText: fmtK(b.val) + " · " + (b.val / (FIN.all.rev[5]) * 100).toFixed(0) + "%", active: b.k === scope })))}</section>
         <section class="card card-pad"><div class="card-head"><div><h2>สัดส่วนตามกลุ่มบริการ</h2><p>ทั้งเครือ · ข้อมูลตัวอย่าง</p></div><span class="pending-def">${icon("shield", 11)}รอนิยาม catalog</span></div>${rankBars(mix.map(m => ({ label: m[0], val: m[1], max: maxMix, valText: m[1] + "%" })))}</section>
       </div>
+      <section class="card card-pad page-section"><div class="card-head"><div><h2>ความหนาแน่นนัดหมายตามวัน–เวลา</h2><p>ทั้งเครือ · ค่าเฉลี่ยต่อช่วงเวลา · ข้อมูลตัวอย่าง</p></div><span class="pending-def">${icon("shield", 11)}รอข้อมูลจริงจาก scheduling</span></div>${heatmap()}<div class="section-kicker" style="margin-top:10px">ใช้วางแผนกำลังคน/เก้าอี้และรอบโปรโมชัน — ช่วงเย็นวันธรรมดาและกลางวันวันหยุดหนาแน่นที่สุด</div></section>
       <div class="prototype-footer">Analytics เป็น synthetic demo · นิยาม metric (return rate, service mix, ARPV) และ catalog กลุ่มบริการต้องอนุมัติก่อนใช้เป็น KPI จริง · Export ต้องมี watermark ของ scope และ timestamp</div>`;
     }
 
