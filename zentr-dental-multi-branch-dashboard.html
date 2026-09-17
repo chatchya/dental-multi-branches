@@ -1,0 +1,1479 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Zentr Dental multi-branch control tower prototype">
+  <title>Zentr Dental · Control Tower Prototype</title>
+  <style>
+    :root {
+      --canvas: #f3f7f5;
+      --surface: #ffffff;
+      --surface-soft: #f8fbfa;
+      --ink: #16362e;
+      --ink-2: #315047;
+      --muted: #6b7c75;
+      --brand: #2d806d;
+      --brand-deep: #1f6656;
+      --brand-soft: #ddf4ec;
+      --mint: #c7ede2;
+      --warning: #b7791f;
+      --warning-soft: #fff3d7;
+      --danger: #b44c4c;
+      --danger-soft: #fbe9e7;
+      --info: #46739a;
+      --info-soft: #eaf2f8;
+      --c-collect: #0d8768;
+      --c-out: #c8871a;
+      --border: #dce6e1;
+      --border-strong: #c7d7d0;
+      --shadow: 0 16px 40px rgba(26, 58, 48, .07);
+      --shadow-soft: 0 8px 24px rgba(26, 58, 48, .05);
+      --radius-lg: 18px;
+      --radius-md: 13px;
+      --radius-sm: 9px;
+      --focus: 0 0 0 3px rgba(45, 128, 109, .25);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+    a { color: inherit; }
+
+    .app { min-height: 100vh; display: flex; }
+    .sidebar {
+      width: 252px;
+      flex: 0 0 252px;
+      background: rgba(255, 255, 255, .86);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 22px 14px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 20;
+    }
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 10px 23px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border: 2px solid var(--brand);
+      border-radius: 11px;
+      color: var(--brand);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      letter-spacing: -.08em;
+      position: relative;
+    }
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      background: var(--mint);
+      border-radius: 50%;
+      right: -4px;
+      bottom: -3px;
+      border: 2px solid var(--surface);
+    }
+    .brand-name { font-weight: 800; font-size: 16px; letter-spacing: -.02em; }
+    .brand-edition { color: var(--muted); font-size: 11px; margin-top: 1px; }
+    .nav-section { margin-top: 22px; }
+    .nav-label {
+      color: #8a9892;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      padding: 0 11px 8px;
+    }
+    .nav-list { display: grid; gap: 4px; }
+    .nav-item {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 11px;
+      border-radius: 11px;
+      text-align: left;
+      min-height: 42px;
+      transition: background .18s ease, color .18s ease, transform .18s ease;
+    }
+    .nav-item:hover { background: var(--surface-soft); color: var(--ink); }
+    .nav-item.active { background: var(--brand-soft); color: var(--brand-deep); font-weight: 800; }
+    .nav-item:active { transform: translateY(1px); }
+    .nav-item .nav-icon { width: 19px; height: 19px; display: grid; place-items: center; flex: 0 0 19px; }
+    .nav-item .nav-count {
+      margin-left: auto;
+      min-width: 22px;
+      padding: 1px 6px;
+      border-radius: 99px;
+      background: var(--surface);
+      color: var(--brand);
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+    }
+    .nav-item.active .nav-count { background: rgba(255,255,255,.72); }
+    .sidebar-spacer { flex: 1; }
+    .sidebar-note {
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin: 14px 4px;
+    }
+    .sidebar-note-title { font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 7px; }
+    .sidebar-note p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 8px 2px;
+      border-top: 1px solid var(--border);
+    }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 12px; }
+    .user-name { font-weight: 800; font-size: 12px; }
+    .user-role { color: var(--muted); font-size: 11px; }
+
+    .main { min-width: 0; flex: 1; }
+    .topbar {
+      height: 76px;
+      background: rgba(255,255,255,.9);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 30px;
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      backdrop-filter: blur(10px);
+    }
+    .mobile-menu { display: none; }
+    .topbar-tenant { min-width: 180px; }
+    .topbar-tenant strong { display: block; font-size: 13px; }
+    .topbar-tenant span { display: block; font-size: 11px; color: var(--muted); }
+    .branch-wrap { position: relative; }
+    .branch-trigger {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 10px;
+      min-height: 42px;
+      padding: 6px 11px;
+      min-width: 178px;
+      text-align: left;
+    }
+    .branch-trigger:hover { border-color: var(--brand); }
+    .branch-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); flex: 0 0 8px; }
+    .branch-trigger-text { flex: 1; min-width: 0; }
+    .branch-trigger-text strong { display: block; font-size: 12px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .branch-trigger-text small { display: block; color: var(--muted); font-size: 10px; margin-top: 1px; }
+    .branch-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 246px;
+      padding: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      box-shadow: var(--shadow);
+    }
+    .branch-menu[hidden] { display: none; }
+    .branch-option {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      gap: 9px;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      padding: 9px;
+      border-radius: 9px;
+      color: var(--ink-2);
+    }
+    .branch-option:hover, .branch-option.selected { background: var(--brand-soft); color: var(--brand-deep); }
+    .branch-option .option-copy { flex: 1; }
+    .branch-option strong { display: block; font-size: 12px; }
+    .branch-option small { display: block; font-size: 10px; color: var(--muted); }
+    .check { color: var(--brand); font-weight: 900; }
+    .topbar-search {
+      flex: 1;
+      min-width: 160px;
+      max-width: 520px;
+      position: relative;
+      margin-left: auto;
+    }
+    .topbar-search input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      border-radius: 10px;
+      min-height: 42px;
+      padding: 0 14px 0 38px;
+      color: var(--ink);
+    }
+    .topbar-search input::placeholder { color: #8a9892; }
+    .search-icon { position: absolute; left: 13px; top: 12px; color: var(--muted); }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn, .primary-btn, .secondary-btn, .text-btn {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+    .icon-btn { width: 40px; padding: 0; border-color: var(--border); background: var(--surface); color: var(--muted); }
+    .icon-btn:hover { color: var(--ink); border-color: var(--brand); }
+    .primary-btn { background: var(--brand); color: #fff; font-weight: 800; box-shadow: 0 6px 16px rgba(45,128,109,.16); }
+    .primary-btn:hover { background: var(--brand-deep); }
+    .secondary-btn { background: var(--surface); color: var(--ink-2); border-color: var(--border); font-weight: 700; }
+    .secondary-btn:hover { border-color: var(--brand); color: var(--brand-deep); }
+    .text-btn { background: transparent; color: var(--brand-deep); padding-left: 0; padding-right: 0; font-weight: 800; min-height: 30px; }
+    .text-btn:hover { color: var(--ink); }
+    .small-btn { min-height: 32px; padding: 0 9px; border-radius: 8px; font-size: 12px; }
+    .app-body { max-width: 1560px; margin: 0 auto; padding: 30px 34px 48px; }
+    .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+    .eyebrow { color: var(--brand); font-size: 10px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(25px, 3vw, 34px); line-height: 1.16; letter-spacing: -.04em; margin: 5px 0 7px; }
+    h2 { font-size: 18px; line-height: 1.25; letter-spacing: -.025em; margin-bottom: 4px; }
+    h3 { font-size: 14px; margin-bottom: 2px; }
+    .page-subtitle { color: var(--muted); margin: 0; max-width: 680px; }
+    .head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .context-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #c9e8dc;
+      background: #effaf6;
+      color: #286451;
+      padding: 10px 13px;
+      border-radius: 11px;
+      margin-bottom: 18px;
+      font-size: 12px;
+    }
+    .context-banner strong { font-weight: 900; }
+    .context-banner .context-meta { margin-left: auto; color: #5e8276; font-size: 11px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 8px; }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+    .filter-select { min-height: 36px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--ink-2); padding: 0 10px; }
+    .segmented { display: inline-flex; padding: 3px; border: 1px solid var(--border); background: var(--surface); border-radius: 10px; }
+    .segmented button { border: 0; min-height: 30px; padding: 0 10px; color: var(--muted); background: transparent; border-radius: 7px; font-size: 12px; }
+    .segmented button.active { background: var(--ink); color: #fff; font-weight: 800; }
+    .updated { color: var(--muted); font-size: 11px; margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .metric-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: left;
+      box-shadow: var(--shadow-soft);
+      transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+    button.metric-card { width: 100%; color: inherit; }
+    .metric-card:hover { border-color: var(--brand); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .metric-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; color: var(--muted); font-size: 11px; }
+    .metric-icon { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 9px; color: var(--brand); background: var(--brand-soft); }
+    .metric-value { font-size: 28px; font-weight: 900; letter-spacing: -.05em; line-height: 1.05; margin: 15px 0 5px; }
+    .metric-note { color: var(--muted); font-size: 11px; }
+    .metric-note strong { color: var(--brand-deep); }
+
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
+    .card-pad { padding: 19px; }
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .card-head p { color: var(--muted); font-size: 12px; margin: 3px 0 0; }
+    .section-kicker { color: var(--muted); font-size: 11px; }
+    .action-link { color: var(--brand-deep); font-size: 12px; font-weight: 800; border: 0; background: transparent; padding: 0; }
+    .action-link:hover { color: var(--ink); }
+    .task-list { display: grid; gap: 9px; }
+    .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-top: 1px solid var(--border); }
+    .task-item:first-child { padding-top: 0; border-top: 0; }
+    .task-marker { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); margin-top: 7px; flex: 0 0 8px; }
+    .task-marker.danger { background: var(--danger); }
+    .task-marker.info { background: var(--info); }
+    .task-copy { flex: 1; min-width: 0; }
+    .task-copy strong { display: block; font-size: 12px; }
+    .task-copy span { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .task-owner { color: var(--brand-deep); font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .branch-table { display: grid; gap: 8px; }
+    .branch-row { display: grid; grid-template-columns: minmax(130px, 1.3fr) repeat(4, minmax(52px, .65fr)) 74px; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
+    .branch-row.header { border-top: 0; padding-top: 0; color: var(--muted); font-size: 10px; font-weight: 800; }
+    .branch-row > div:not(:first-child) { text-align: right; }
+    .branch-name { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 12px; }
+    .branch-swatch { width: 9px; height: 9px; border-radius: 3px; background: var(--brand); }
+    .branch-meta { display: block; font-size: 10px; color: var(--muted); font-weight: 500; }
+    .number { font-weight: 800; font-size: 12px; }
+    .number.warning { color: var(--warning); }
+    .number.danger { color: var(--danger); }
+    .tiny-status { color: var(--muted); font-size: 10px; text-align: right; }
+    .mini-timeline { display: grid; gap: 0; }
+    .timeline-row { display: grid; grid-template-columns: 54px 1fr; gap: 12px; min-height: 64px; }
+    .timeline-time { color: var(--muted); font-size: 11px; padding-top: 12px; }
+    .timeline-event { border-left: 1px solid var(--border-strong); padding: 8px 0 12px 15px; position: relative; }
+    .timeline-event::before { content: ""; position: absolute; width: 8px; height: 8px; background: var(--surface); border: 2px solid var(--brand); border-radius: 50%; left: -5px; top: 12px; }
+    .timeline-event strong { display: block; font-size: 12px; }
+    .timeline-event span { display: block; color: var(--muted); font-size: 11px; }
+    .event-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+    .badge, .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 23px;
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .badge { background: var(--surface-soft); border: 1px solid var(--border); color: var(--muted); }
+    .status.confirmed, .status.done { color: #26715c; background: var(--brand-soft); }
+    .status.pending { color: #946619; background: var(--warning-soft); }
+    .status.cancelled, .status.risk { color: #a34444; background: var(--danger-soft); }
+    .status.info { color: #3e6888; background: var(--info-soft); }
+    .status.neutral { color: var(--muted); background: #eef2f0; }
+    .insight-strip { display: flex; align-items: flex-start; gap: 11px; border: 1px solid #e7dfbd; background: #fffaf0; border-radius: 12px; padding: 12px; margin-top: 14px; }
+    .insight-icon { color: var(--warning); background: var(--warning-soft); width: 28px; height: 28px; display: grid; place-items: center; border-radius: 9px; flex: 0 0 28px; }
+    .insight-strip strong { display: block; font-size: 12px; }
+    .insight-strip span { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .insight-strip .action-link { margin-left: auto; padding-top: 4px; }
+    .bar-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 9px; height: 142px; align-items: end; padding-top: 18px; }
+    .bar-col { display: grid; gap: 6px; justify-items: center; height: 100%; align-items: end; }
+    .bar { width: 100%; max-width: 27px; background: var(--mint); border-radius: 6px 6px 3px 3px; min-height: 10px; }
+    .bar.current { background: var(--brand); }
+    .bar-col span { color: var(--muted); font-size: 10px; }
+    .chart-legend { display: flex; gap: 12px; color: var(--muted); font-size: 10px; margin-top: 10px; }
+    .chart-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 3px; background: var(--mint); margin-right: 4px; }
+    .chart-legend i.current { background: var(--brand); }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 13px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 12px 13px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+    th { color: var(--muted); font-size: 10px; font-weight: 900; background: var(--surface-soft); white-space: nowrap; }
+    td { font-size: 12px; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fbfdfc; }
+    .person-cell strong { display: block; font-size: 12px; }
+    .person-cell span { display: block; color: var(--muted); font-size: 10px; }
+    .clickable-row { cursor: pointer; }
+    .compact-card { padding: 16px; }
+    .page-section { margin-top: 18px; }
+    .page-section-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 11px; gap: 12px; }
+    .page-section-head p { color: var(--muted); font-size: 12px; margin: 3px 0 0; }
+
+    .schedule-layout { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 16px; }
+    .schedule-board { overflow: hidden; }
+    .schedule-header { display: grid; grid-template-columns: 170px repeat(5, minmax(100px, 1fr)); border-bottom: 1px solid var(--border); background: var(--surface-soft); min-width: 720px; }
+    .schedule-header div { padding: 12px 10px; color: var(--muted); font-size: 10px; font-weight: 900; border-left: 1px solid var(--border); }
+    .schedule-header div:first-child { border-left: 0; }
+    .resource-row { display: grid; grid-template-columns: 170px repeat(5, minmax(100px, 1fr)); min-width: 720px; min-height: 90px; border-bottom: 1px solid var(--border); }
+    .resource-row:last-child { border-bottom: 0; }
+    .resource-label { padding: 13px 12px; border-right: 1px solid var(--border); }
+    .resource-label strong { display: block; font-size: 12px; }
+    .resource-label span { color: var(--muted); font-size: 10px; }
+    .resource-cell { padding: 7px; border-right: 1px dashed var(--border); background: #fff; }
+    .resource-cell:last-child { border-right: 0; }
+    .appointment-card { width: 100%; min-height: 72px; text-align: left; padding: 9px; border: 1px solid #bde5d7; background: #f0fbf7; border-radius: 10px; color: var(--ink); }
+    .appointment-card.pending { border-color: #efd28f; background: #fff9e9; }
+    .appointment-card:hover { border-color: var(--brand); }
+    .appointment-card strong { display: block; font-size: 11px; line-height: 1.3; }
+    .appointment-card span { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
+    .schedule-aside { display: grid; gap: 12px; align-content: start; }
+    .legend-list { display: grid; gap: 9px; }
+    .legend-row { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 3px; background: var(--brand); }
+    .legend-swatch.pending { background: #e7bf58; }
+    .legend-swatch.completed { background: #8aa19a; }
+    .legend-swatch.block { background: #d5ded9; }
+    .queue-grid { display: grid; grid-template-columns: repeat(5, minmax(190px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+    .queue-column { min-width: 190px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .queue-column-head { display: flex; justify-content: space-between; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .queue-column-head strong { font-size: 12px; }
+    .queue-column-head span { color: var(--muted); font-size: 11px; }
+    .queue-cards { display: grid; gap: 8px; margin-top: 10px; }
+    .queue-card { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 10px; }
+    .queue-card strong { display: block; font-size: 11px; }
+    .queue-card span { display: block; color: var(--muted); font-size: 10px; }
+    .queue-actions { display: flex; gap: 5px; margin-top: 8px; }
+
+    .patient-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; }
+    .patient-list { display: grid; gap: 8px; }
+    .patient-item { width: 100%; display: flex; align-items: center; gap: 11px; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: inherit; }
+    .patient-item:hover, .patient-item.selected { border-color: var(--brand); background: #fbfefc; }
+    .patient-avatar { width: 37px; height: 37px; border-radius: 12px; background: var(--mint); color: var(--brand-deep); display: grid; place-items: center; font-weight: 900; font-size: 12px; flex: 0 0 37px; }
+    .patient-main { flex: 1; min-width: 0; }
+    .patient-main strong { display: block; font-size: 12px; }
+    .patient-main span { display: block; color: var(--muted); font-size: 10px; }
+    .patient-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+    .patient-item .patient-next { text-align: right; font-size: 10px; color: var(--muted); white-space: nowrap; }
+    .patient-item .patient-next strong { display: block; color: var(--ink-2); font-size: 11px; }
+    .patient-summary { position: sticky; top: 96px; align-self: start; }
+    .patient-summary-head { display: flex; align-items: flex-start; gap: 11px; }
+    .patient-summary-head h2 { margin: 0; font-size: 17px; }
+    .summary-grid { display: grid; gap: 10px; margin-top: 17px; }
+    .summary-row { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--border); font-size: 11px; }
+    .summary-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .summary-row span { color: var(--muted); }
+    .summary-row strong { text-align: right; }
+    .protected-box { margin-top: 16px; border: 1px solid #d8e1df; background: #f5f8f7; border-radius: 11px; padding: 11px; }
+    .protected-box strong { display: flex; align-items: center; gap: 7px; font-size: 11px; }
+    .protected-box p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+    .timeline-mini { margin-top: 18px; display: grid; gap: 0; }
+    .timeline-mini-item { display: grid; grid-template-columns: 62px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); }
+    .timeline-mini-item time { color: var(--muted); font-size: 10px; }
+    .timeline-mini-item strong { display: block; font-size: 11px; }
+    .timeline-mini-item span { display: block; color: var(--muted); font-size: 10px; }
+
+    .lab-board { display: grid; grid-template-columns: repeat(5, minmax(190px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+    .lab-column { min-width: 190px; }
+    .lab-column-header { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 3px 2px 10px; }
+    .lab-column-header strong { font-size: 12px; }
+    .lab-column-header span { color: var(--muted); font-size: 11px; }
+    .lab-list { display: grid; gap: 9px; }
+    .lab-card { border: 1px solid var(--border); background: var(--surface); border-radius: 13px; padding: 12px; box-shadow: var(--shadow-soft); }
+    .lab-card.risk { border-color: #eec8c4; background: #fffafa; }
+    .lab-card-head { display: flex; justify-content: space-between; gap: 7px; align-items: flex-start; }
+    .lab-card strong { font-size: 11px; line-height: 1.35; }
+    .lab-card .lab-meta { color: var(--muted); font-size: 10px; margin-top: 5px; }
+    .lab-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 11px 0; }
+    .lab-date { border: 1px solid var(--border); background: var(--surface-soft); border-radius: 8px; padding: 6px; }
+    .lab-date span { display: block; color: var(--muted); font-size: 9px; }
+    .lab-date strong { display: block; margin-top: 2px; font-size: 11px; }
+    .lab-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .risk-copy { color: var(--danger); font-size: 10px; font-weight: 800; }
+
+    .finance-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .finance-metric { padding: 15px; border: 1px solid var(--border); background: var(--surface); border-radius: 13px; }
+    .finance-metric span { color: var(--muted); font-size: 11px; }
+    .finance-metric strong { display: block; font-size: 23px; margin-top: 8px; letter-spacing: -.04em; }
+    .aging-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 13px; }
+    .aging-item { border: 1px solid var(--border); background: var(--surface-soft); border-radius: 9px; padding: 9px; }
+    .aging-item span { display: block; color: var(--muted); font-size: 10px; }
+    .aging-item strong { display: block; margin-top: 3px; font-size: 14px; }
+    .df-breakdown { display: grid; gap: 9px; }
+    .df-line { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+    .df-line:last-child { border-bottom: 0; }
+    .df-line span { color: var(--muted); }
+    .df-total { font-size: 16px; font-weight: 900; color: var(--brand-deep); }
+    /* --- SVG stacked chart (revenue / collection / outstanding) --- */
+    .zchart-wrap { position: relative; margin-top: 6px; }
+    .zchart { width: 100%; height: auto; display: block; }
+    .zcol { cursor: pointer; }
+    .zcol:hover .zseg { filter: brightness(1.07); }
+    .ztip { position: absolute; pointer-events: none; opacity: 0; transform: translate(-50%, -110%); background: var(--ink); color: #fff; border-radius: 10px; padding: 9px 12px; font-size: 11px; min-width: 158px; box-shadow: var(--shadow); z-index: 6; transition: opacity .12s ease; }
+    .ztip.show { opacity: 1; }
+    .ztip .zt-m { font-weight: 800; margin-bottom: 5px; }
+    .ztip .zt-r { display: flex; justify-content: space-between; gap: 14px; line-height: 1.75; }
+    .ztip .zt-r i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 6px; }
+    .ztip .zt-sep { margin-top: 4px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,.2); }
+    .zlegend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 2px; font-size: 11px; }
+    .zlegend span { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); }
+    .zlegend i { width: 11px; height: 11px; border-radius: 3px; }
+    /* --- aging segmented bar --- */
+    .age-bar { display: flex; height: 13px; border-radius: 99px; overflow: hidden; gap: 2px; background: var(--surface-soft); margin: 8px 0 13px; }
+    .age-bar i { height: 100%; }
+    .age-legend { display: flex; flex-direction: column; gap: 8px; }
+    .age-row { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+    .age-sw { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 10px; }
+    .age-nm { color: var(--ink-2); }
+    .age-row strong { margin-left: auto; font-size: 12px; }
+    .age-pc { color: var(--muted); font-size: 11px; width: 34px; text-align: right; }
+    /* --- DF review table + cross-branch + approval --- */
+    .df-table .df-flag { color: var(--warning); font-weight: 700; font-size: 11px; }
+    .xbranch .xrow { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .xbranch .xrow:last-child { border-bottom: 0; }
+    .xbranch .xrow span { color: var(--muted); }
+    .xbranch .xrow strong { color: var(--ink-2); text-align: right; }
+    .fin-delta { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 99px; }
+    .fin-delta.up { color: #26715c; background: var(--brand-soft); }
+    .fin-delta.down { color: #a34444; background: var(--danger-soft); }
+    .approval-strip { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px dashed var(--border-strong); border-radius: 13px; background: var(--surface-soft); margin: 16px 18px 18px; }
+    .approval-strip .ap-ba { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .approval-strip .ap-old { color: var(--muted); text-decoration: line-through; }
+    .approval-strip .ap-new { color: var(--brand-deep); font-weight: 900; }
+    /* --- Reports: tabs, metadata, compare bars --- */
+    .rtabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 15px; border-bottom: 1px solid var(--border); }
+    .rtab { padding: 9px 15px; font-weight: 700; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; border-radius: 8px 8px 0 0; }
+    .rtab:hover { color: var(--ink); background: var(--surface-soft); }
+    .rtab.active { color: var(--brand-deep); border-bottom-color: var(--brand); }
+    .rmeta { display: flex; flex-wrap: wrap; gap: 7px 20px; padding: 11px 15px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 11px; margin-bottom: 15px; font-size: 11px; color: var(--muted); }
+    .rmeta .rmeta-item { display: inline-flex; gap: 6px; align-items: center; }
+    .rmeta b { color: var(--ink-2); font-weight: 700; }
+    .hbar-row { display: grid; grid-template-columns: 96px 1fr 52px; align-items: center; gap: 11px; margin-bottom: 11px; }
+    .hbar-row .hbar-lbl { font-size: 12px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 7px; }
+    .hbar-row .hbar-lbl i { width: 9px; height: 9px; border-radius: 2px; flex: 0 0 9px; }
+    .hbar-track { height: 10px; background: var(--surface-soft); border-radius: 99px; overflow: hidden; }
+    .hbar-track i { display: block; height: 100%; border-radius: 99px; }
+    .hbar-row b { text-align: right; font-size: 12px; }
+    .pending-def { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; letter-spacing: .03em; color: #3e6888; background: var(--info-soft); padding: 2px 8px; border-radius: 99px; }
+
+    .inbox-layout { display: grid; grid-template-columns: 286px minmax(0, 1fr) 300px; gap: 0; min-height: 610px; overflow: hidden; }
+    .inbox-list, .inbox-context { background: var(--surface-soft); }
+    .inbox-list { border-right: 1px solid var(--border); }
+    .inbox-context { border-left: 1px solid var(--border); }
+    .inbox-list-head, .inbox-context-head { padding: 16px; border-bottom: 1px solid var(--border); }
+    .inbox-list-head strong, .inbox-context-head strong { font-size: 12px; }
+    .inbox-filter { margin-top: 10px; width: 100%; }
+    .inbox-item { width: 100%; padding: 13px 15px; border: 0; border-bottom: 1px solid var(--border); background: transparent; text-align: left; color: inherit; }
+    .inbox-item:hover, .inbox-item.selected { background: var(--surface); }
+    .inbox-item-top { display: flex; justify-content: space-between; gap: 7px; align-items: center; }
+    .inbox-item-top strong { font-size: 11px; }
+    .inbox-item-top time { color: var(--muted); font-size: 10px; }
+    .inbox-item p { margin: 4px 0; color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .inbox-item-meta { display: flex; gap: 5px; flex-wrap: wrap; }
+    .conversation { background: var(--surface); display: flex; flex-direction: column; min-width: 0; }
+    .conversation-head { padding: 16px 19px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .conversation-head h2 { margin: 0; font-size: 16px; }
+    .conversation-head p { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+    .chat-body { padding: 19px; display: grid; gap: 12px; align-content: start; flex: 1; background: #fbfdfc; }
+    .chat-bubble { max-width: 74%; padding: 11px 13px; border-radius: 13px; font-size: 12px; }
+    .chat-bubble.incoming { background: var(--surface); border: 1px solid var(--border); justify-self: start; border-top-left-radius: 5px; }
+    .chat-bubble.outgoing { background: var(--brand-soft); border: 1px solid #c9e8dc; justify-self: end; border-top-right-radius: 5px; }
+    .chat-bubble small { display: block; color: var(--muted); font-size: 9px; margin-top: 5px; }
+    .ai-draft { border: 1px solid #d8e6e1; background: var(--surface); border-radius: 12px; padding: 12px; margin-top: auto; }
+    .ai-draft-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .ai-draft-head strong { font-size: 11px; }
+    .ai-draft p { color: var(--ink-2); font-size: 11px; margin: 9px 0; }
+    .ai-draft-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .safe-banner { margin: 15px 16px 0; border: 1px solid #e7dfbd; background: #fffaf0; color: #7f5a16; border-radius: 10px; padding: 9px 10px; font-size: 10px; line-height: 1.45; }
+    .context-block { padding: 16px; border-bottom: 1px solid var(--border); }
+    .context-block:last-child { border-bottom: 0; }
+    .context-block h3 { font-size: 11px; margin-bottom: 9px; }
+    .context-line { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; padding: 5px 0; }
+    .context-line span { color: var(--muted); }
+    .context-line strong { text-align: right; }
+
+    .settings-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 16px; }
+    .branch-settings { display: grid; gap: 10px; }
+    .branch-setting { display: flex; gap: 13px; align-items: flex-start; border: 1px solid var(--border); border-radius: 13px; padding: 13px; }
+    .branch-setting:hover { border-color: var(--brand); }
+    .branch-setting .branch-swatch { width: 12px; height: 12px; margin-top: 4px; }
+    .branch-setting-main { flex: 1; min-width: 0; }
+    .branch-setting-main strong { display: block; font-size: 12px; }
+    .branch-setting-main p { color: var(--muted); font-size: 10px; margin: 3px 0 8px; }
+    .setting-meta { display: flex; gap: 5px; flex-wrap: wrap; }
+    .access-table table { min-width: 620px; }
+    .permission-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: var(--brand-deep); }
+    .permission-pill.restricted { color: var(--muted); }
+    .policy-list { display: grid; gap: 9px; }
+    .policy-row { display: flex; align-items: flex-start; gap: 9px; padding: 10px 0; border-top: 1px solid var(--border); }
+    .policy-row:first-child { border-top: 0; padding-top: 0; }
+    .policy-row strong { display: block; font-size: 11px; }
+    .policy-row span { display: block; color: var(--muted); font-size: 10px; }
+    .policy-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 8px; background: var(--info-soft); color: var(--info); flex: 0 0 27px; }
+
+    .empty-state { border: 1px dashed var(--border-strong); border-radius: 13px; padding: 30px; text-align: center; color: var(--muted); }
+    .empty-state strong { display: block; color: var(--ink-2); font-size: 13px; margin-bottom: 4px; }
+    .empty-state p { margin: 0 auto 12px; font-size: 11px; max-width: 360px; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(16, 39, 32, .35); z-index: 100; display: grid; place-items: center; padding: 20px; }
+    .modal-backdrop[hidden] { display: none; }
+    .modal-panel { width: min(540px, 100%); max-height: min(760px, 90vh); overflow: auto; background: var(--surface); border-radius: 18px; border: 1px solid var(--border); box-shadow: 0 24px 80px rgba(16,39,32,.22); }
+    .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 21px 15px; border-bottom: 1px solid var(--border); }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .modal-head p { color: var(--muted); font-size: 11px; margin: 4px 0 0; }
+    .modal-body { padding: 19px 21px 21px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .detail-item { border: 1px solid var(--border); background: var(--surface-soft); border-radius: 10px; padding: 10px; }
+    .detail-item span { display: block; color: var(--muted); font-size: 10px; }
+    .detail-item strong { display: block; font-size: 12px; margin-top: 3px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+    .modal-note { border: 1px solid #e7dfbd; background: #fffaf0; color: #7f5a16; border-radius: 10px; padding: 10px; font-size: 11px; margin-top: 14px; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 200; background: var(--ink); color: #fff; border-radius: 10px; padding: 11px 14px; box-shadow: var(--shadow); font-size: 12px; opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .prototype-footer { color: var(--muted); font-size: 10px; text-align: center; margin-top: 28px; }
+
+    /* Executive overview: decision support first, daily operation second. */
+    .exec-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 18px 0 13px; }
+    .exec-toolbar-copy { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 11px; }
+    .exec-toolbar-copy strong { color: var(--ink-2); font-size: 12px; }
+    .exec-toolbar-actions { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .executive-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .exec-metric { text-align: left; }
+    .exec-metric .metric-value { letter-spacing: -.05em; }
+    .exec-metric .metric-note { min-height: 29px; }
+    .exec-content-grid { grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); margin-top: 16px; }
+    .exec-card { min-width: 0; }
+    .exec-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .exec-card-head h2 { margin: 0; font-size: 15px; letter-spacing: -.02em; }
+    .exec-card-head p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+    .exec-legend { display: flex; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 10px; }
+    .exec-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .exec-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: var(--brand); }
+    .exec-legend i.alt { background: #a9d8c8; }
+    .exec-bars { height: 178px; display: grid; grid-template-columns: repeat(6, minmax(38px, 1fr)); align-items: end; gap: 13px; padding: 7px 6px 0; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .exec-bar-group { height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 4px; position: relative; }
+    .exec-bar { width: 14px; border-radius: 5px 5px 0 0; background: var(--brand); min-height: 8px; }
+    .exec-bar.alt { background: #a9d8c8; }
+    .exec-bar-label { position: absolute; bottom: -22px; color: var(--muted); font-size: 9px; white-space: nowrap; }
+    .exec-chart-note { display: flex; justify-content: space-between; gap: 10px; margin-top: 30px; color: var(--muted); font-size: 10px; }
+    .exec-chart-note strong { color: var(--ink-2); font-size: 12px; }
+    .exec-decision-list { display: grid; gap: 3px; }
+    .exec-decision { display: grid; grid-template-columns: 29px minmax(0, 1fr) auto; gap: 9px; align-items: start; padding: 11px 0; border-top: 1px solid var(--border); }
+    .exec-decision:first-child { border-top: 0; padding-top: 0; }
+    .exec-decision-icon { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 9px; color: var(--warning); background: var(--warning-soft); }
+    .exec-decision-icon.danger { color: var(--danger); background: var(--danger-soft); }
+    .exec-decision-icon.info { color: var(--info); background: var(--info-soft); }
+    .exec-decision strong { display: block; font-size: 11px; line-height: 1.35; }
+    .exec-decision p { margin: 3px 0 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .exec-decision .action-link { margin-top: 2px; white-space: nowrap; }
+    .exec-branch-card { margin-top: 16px; }
+    .exec-branch-card .table-wrap { border-radius: 12px; }
+    .exec-branch-card table { min-width: 900px; }
+    .exec-branch-card th, .exec-branch-card td { padding: 11px 12px; }
+    .exec-branch-name { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .exec-branch-name .branch-dot { width: 9px; height: 9px; }
+    .exec-branch-health { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+    .exec-branch-health small { color: var(--muted); font-size: 9px; }
+    .exec-lower-grid { margin-top: 16px; align-items: stretch; }
+    .exec-funnel { display: grid; gap: 11px; }
+    .exec-funnel-row { display: grid; grid-template-columns: 90px minmax(0, 1fr) 36px; gap: 9px; align-items: center; font-size: 10px; }
+    .exec-funnel-row > span:first-child { color: var(--muted); }
+    .exec-funnel-row strong { text-align: right; font-size: 11px; }
+    .exec-funnel-track { height: 9px; background: var(--surface-soft); border-radius: 99px; overflow: hidden; }
+    .exec-funnel-track i { display: block; height: 100%; border-radius: inherit; background: var(--brand); }
+    .exec-funnel-track i.alt { background: #72bca7; }
+    .exec-funnel-track i.warn { background: var(--warning); }
+    .exec-risk-list { display: grid; gap: 9px; }
+    .exec-risk-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+    .exec-risk-row:last-child { padding-bottom: 0; border-bottom: 0; }
+    .exec-risk-row strong { display: block; font-size: 11px; }
+    .exec-risk-row span { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .exec-risk-row .status { flex: 0 0 auto; }
+    .exec-ops-card { border-style: dashed; background: #fbfdfc; }
+    .exec-ops-card .ops-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .exec-ops-card .ops-link { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--ink-2); padding: 10px; text-align: left; }
+    .exec-ops-card .ops-link:hover { border-color: var(--brand); color: var(--brand-deep); }
+    .exec-ops-card .ops-link strong { font-size: 10px; }
+    .exec-ops-card .ops-link span { color: var(--muted); font-size: 9px; }
+    .exec-data-note { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 10px; }
+
+    @media (max-width: 1240px) {
+      .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .executive-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .grid-2, .settings-grid { grid-template-columns: 1fr; }
+      .patient-layout { grid-template-columns: 1fr; }
+      .patient-summary { position: static; }
+      .inbox-layout { grid-template-columns: 250px minmax(0, 1fr); }
+      .inbox-context { display: none; }
+    }
+    @media (max-width: 900px) {
+      .sidebar { position: fixed; left: 0; transform: translateX(-102%); transition: transform .2s ease; box-shadow: var(--shadow); }
+      body.nav-open .sidebar { transform: translateX(0); }
+      .mobile-menu { display: inline-flex; }
+      .topbar { padding: 0 18px; gap: 9px; }
+      .topbar-tenant { min-width: 0; }
+      .topbar-tenant span { display: none; }
+      .topbar-search { max-width: none; }
+      .app-body { padding: 24px 20px 40px; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .schedule-layout { grid-template-columns: 1fr; }
+      .schedule-aside { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .topbar { height: 66px; }
+      .topbar-tenant { display: none; }
+      .branch-trigger { min-width: 0; max-width: 142px; }
+      .branch-trigger-text strong { max-width: 90px; }
+      .topbar-actions .icon-btn { display: none; }
+      .topbar-actions .primary-btn { width: 40px; padding: 0; font-size: 0; }
+      .topbar-actions .primary-btn svg { margin: 0; }
+      .topbar-search input { padding-left: 33px; }
+      .app-body { padding: 21px 14px 34px; }
+      .page-head { display: block; }
+      .head-actions { justify-content: flex-start; margin-top: 14px; }
+      h1 { font-size: 27px; }
+      .context-banner { align-items: flex-start; }
+      .context-banner .context-meta { display: none; }
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .executive-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .metric-card { padding: 13px; }
+      .metric-value { font-size: 23px; }
+      .branch-row { grid-template-columns: minmax(130px, 1.3fr) repeat(4, minmax(42px, .65fr)); }
+      .branch-row > div:last-child { display: none; }
+      .schedule-aside { grid-template-columns: 1fr; }
+      .finance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .aging-grid { grid-template-columns: repeat(2, 1fr); }
+      .inbox-layout { grid-template-columns: 1fr; }
+      .inbox-list { border-right: 0; border-bottom: 1px solid var(--border); max-height: 220px; overflow: auto; }
+      .inbox-list-head { padding: 12px 14px; }
+      .inbox-item { padding: 10px 14px; }
+      .chat-body { min-height: 410px; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .toast { left: 14px; right: 14px; bottom: 14px; text-align: center; }
+      .exec-toolbar { align-items: flex-start; }
+      .exec-bars { gap: 7px; padding-left: 0; padding-right: 0; }
+      .exec-bar { width: 10px; }
+      .exec-lower-grid { grid-template-columns: 1fr; }
+      .exec-ops-card .ops-links { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="เมนูหลัก">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">Z</div>
+        <div>
+          <div class="brand-name">Zentr Dental</div>
+          <div class="brand-edition">Multi-branch control tower</div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">ทำงาน</div>
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="dashboard"><span class="nav-icon" data-icon="overview"></span><span>ภาพรวมเครือคลินิก</span></button>
+          <button class="nav-item" data-view="schedule"><span class="nav-icon" data-icon="calendar"></span><span>นัดหมายและคิว</span><span class="nav-count">4</span></button>
+          <button class="nav-item" data-view="labs"><span class="nav-icon" data-icon="lab"></span><span>งานแล็บ</span><span class="nav-count">3</span></button>
+          <button class="nav-item" data-view="inbox"><span class="nav-icon" data-icon="inbox"></span><span>Inbox</span><span class="nav-count">6</span></button>
+        </nav>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">ดูแลคนไข้</div>
+        <nav class="nav-list">
+          <button class="nav-item" data-view="patients"><span class="nav-icon" data-icon="patients"></span><span>คนไข้ / Patient 360</span></button>
+          <button class="nav-item" data-view="treatment"><span class="nav-icon" data-icon="tooth"></span><span>การรักษา</span></button>
+          <button class="nav-item" data-view="finance"><span class="nav-icon" data-icon="finance"></span><span>การเงินและ DF</span></button>
+        </nav>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">บริหารเครือ</div>
+        <nav class="nav-list">
+          <button class="nav-item" data-view="reports"><span class="nav-icon" data-icon="reports"></span><span>รายงานและ Insights</span></button>
+          <button class="nav-item" data-view="settings"><span class="nav-icon" data-icon="settings"></span><span>ตั้งค่าองค์กร</span></button>
+        </nav>
+      </div>
+
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-note">
+        <div class="sidebar-note-title"><span data-icon="shield"></span> ข้อมูลสุขภาพต้องมีขอบเขต</div>
+        <p>ทุก record มี branch context และสิทธิ์เป็นผู้ตัดสิน การ์ดนี้เป็น prototype data เท่านั้น</p>
+      </div>
+      <div class="user-card">
+        <div class="avatar" aria-hidden="true">HQ</div>
+        <div><div class="user-name">ผู้ใช้สมมติ · HQ Owner</div><div class="user-role">ดูได้ตาม policy องค์กร</div></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-menu" id="mobileMenu" aria-label="เปิดเมนูหลัก"><span data-icon="menu"></span></button>
+        <div class="topbar-tenant"><strong>คลินิกตัวอย่าง · HQ</strong><span>มุมมองการควบคุมเครือ</span></div>
+        <div class="branch-wrap">
+          <button class="branch-trigger" id="branchTrigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="branch-dot"></span><span class="branch-trigger-text"><strong id="branchLabel">ทุกสาขา</strong><small id="branchSub">รวม 3 สาขา</small></span><span data-icon="chevron"></span>
+          </button>
+          <div class="branch-menu" id="branchMenu" role="listbox" hidden></div>
+        </div>
+        <div class="topbar-search"><span class="search-icon" data-icon="search"></span><input id="globalSearch" aria-label="ค้นหาทั่วระบบ" placeholder="ค้นหา HN / ชื่อ / นัด / บิล"></div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="notifyButton" aria-label="การแจ้งเตือน"><span data-icon="bell"></span></button>
+          <button class="primary-btn" id="createButton"><span data-icon="plus"></span><span class="create-label">สร้างรายการ</span></button>
+        </div>
+      </header>
+
+      <section class="app-body" id="appContent" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalRoot" hidden role="presentation"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const state = {
+      view: "dashboard",
+      branch: "all",
+      selectedPatient: 0,
+      selectedConversation: 0,
+      reportTab: "ops",
+      modalOpen: false
+    };
+
+    const branches = [
+      { key: "all", label: "ทุกสาขา", sub: "รวม 3 สาขา", color: "#2d806d" },
+      { key: "a", label: "สาขา A", sub: "เปิดรับนัด · 4 เก้าอี้", color: "#2d806d" },
+      { key: "b", label: "สาขา B", sub: "เปิดรับนัด · 3 เก้าอี้", color: "#46739a" },
+      { key: "c", label: "สาขา C", sub: "เปิดรับนัด · 2 เก้าอี้", color: "#b7791f" }
+    ];
+
+    const appointments = [
+      { id: "SYN-0001", time: "09:00", duration: "45 นาที", patient: "ผู้รับบริการตัวอย่าง 01", hn: "SYN-HN-0042", procedure: "ตรวจติดตาม", provider: "ผู้ให้บริการสมมติ A", chair: "เก้าอี้ 01", branch: "a", source: "LINE OA", status: "ยืนยันแล้ว", statusClass: "confirmed" },
+      { id: "SYN-0002", time: "10:30", duration: "60 นาที", patient: "ผู้รับบริการตัวอย่าง 02", hn: "SYN-HN-0043", procedure: "หัตถการสมมติ", provider: "ผู้ให้บริการสมมติ B", chair: "เก้าอี้ 02", branch: "a", source: "เคาน์เตอร์", status: "รอยืนยัน", statusClass: "pending" },
+      { id: "SYN-0003", time: "11:00", duration: "30 นาที", patient: "ผู้รับบริการตัวอย่าง 03", hn: "SYN-HN-0087", procedure: "นัดติดตามแผน", provider: "ผู้ให้บริการสมมติ C", chair: "เก้าอี้ 01", branch: "b", source: "Website Chat", status: "ยืนยันแล้ว", statusClass: "confirmed" },
+      { id: "SYN-0004", time: "13:00", duration: "90 นาที", patient: "ผู้รับบริการตัวอย่าง 04", hn: "SYN-HN-0118", procedure: "หัตถการสมมติ", provider: "ผู้ให้บริการสมมติ A", chair: "เก้าอี้ 03", branch: "c", source: "LINE OA", status: "ยืนยันแล้ว", statusClass: "confirmed" },
+      { id: "SYN-0005", time: "14:30", duration: "45 นาที", patient: "ผู้รับบริการตัวอย่าง 05", hn: "SYN-HN-0149", procedure: "นัดประเมินแผน", provider: "ผู้ให้บริการสมมติ D", chair: "เก้าอี้ 01", branch: "b", source: "เคาน์เตอร์", status: "รอยืนยัน", statusClass: "pending" }
+    ];
+
+    const patients = [
+      { id: "SYN-HN-0042", initials: "01", name: "ผู้รับบริการตัวอย่าง 01", branch: "a", tags: ["กำลังจัดฟัน", "มีแผนค้าง"], next: "18 ก.ย. · สาขา B", last: "16 ก.ย. · สาขา A", plan: "กำลังรักษา", consent: "3/4 จุดประสงค์" },
+      { id: "SYN-HN-0043", initials: "02", name: "ผู้รับบริการตัวอย่าง 02", branch: "a", tags: ["คนไข้ใหม่"], next: "วันนี้ · สาขา A", last: "ยังไม่มี encounter", plan: "ยังไม่มีแผน", consent: "2/4 จุดประสงค์" },
+      { id: "SYN-HN-0087", initials: "03", name: "ผู้รับบริการตัวอย่าง 03", branch: "b", tags: ["รอแล็บ", "มีแผนค้าง"], next: "20 ก.ย. · สาขา B", last: "10 ก.ย. · สาขา B", plan: "เสนอแล้ว", consent: "4/4 จุดประสงค์" },
+      { id: "SYN-HN-0118", initials: "04", name: "ผู้รับบริการตัวอย่าง 04", branch: "c", tags: ["ถึงกำหนด recall"], next: "ยังไม่ได้นัด", last: "28 ส.ค. · สาขา C", plan: "เสร็จสิ้น", consent: "3/4 จุดประสงค์" }
+    ];
+
+    const labs = [
+      { id: "SYN-LAB-01", stage: "sent", title: "ชิ้นงานสมมติ 01", type: "ประเภทงานสมมติ · ตำแหน่งตัวอย่าง", lab: "แล็บตัวอย่าง A", branch: "a", due: "17 ก.ย.", fitting: "18 ก.ย.", risk: "buffer ต่ำกว่า threshold", riskClass: "risk" },
+      { id: "SYN-LAB-02", stage: "production", title: "ชิ้นงานสมมติ 02", type: "ประเภทงานสมมติ · ตำแหน่งตัวอย่าง", lab: "แล็บตัวอย่าง B", branch: "b", due: "19 ก.ย.", fitting: "23 ก.ย.", risk: "", riskClass: "" },
+      { id: "SYN-LAB-03", stage: "production", title: "ชิ้นงานสมมติ 03", type: "ประเภทงานสมมติ · ตำแหน่งตัวอย่าง", lab: "แล็บตัวอย่าง A", branch: "a", due: "20 ก.ย.", fitting: "24 ก.ย.", risk: "", riskClass: "" },
+      { id: "SYN-LAB-04", stage: "shipping", title: "ชิ้นงานสมมติ 04", type: "ประเภทงานสมมติ · ตำแหน่งตัวอย่าง", lab: "แล็บตัวอย่าง C", branch: "c", due: "วันนี้", fitting: "18 ก.ย.", risk: "กำหนดรับชนวันนัดใส่", riskClass: "risk" },
+      { id: "SYN-LAB-05", stage: "clinic", title: "ชิ้นงานสมมติ 05", type: "ประเภทงานสมมติ · ตำแหน่งตัวอย่าง", lab: "แล็บตัวอย่าง B", branch: "b", due: "รับแล้ว", fitting: "21 ก.ย.", risk: "", riskClass: "" },
+      { id: "SYN-LAB-06", stage: "done", title: "ชิ้นงานสมมติ 06", type: "ประเภทงานสมมติ · ตำแหน่งตัวอย่าง", lab: "แล็บตัวอย่าง A", branch: "a", due: "เสร็จสิ้น", fitting: "—", risk: "", riskClass: "" }
+    ];
+
+    const conversations = [
+      { title: "ขอเวลานัดที่สาขา B", channel: "LINE OA", tag: "ขอนัดหมาย", branch: "b", time: "09:32", state: "รอคนรับช่วง", patient: "ผู้รับบริการตัวอย่าง 01", messages: [{ who: "คนไข้", text: "อยากเช็กเวลาว่างของสาขา B ในสัปดาห์นี้ค่ะ" }, { who: "AI draft", text: "ผมช่วยตรวจช่วงเวลาว่างให้ได้ ขอทราบวันที่สะดวกและสาขาที่ต้องการยืนยันอีกครั้งนะครับ" }] },
+      { title: "ติดตามแผนรักษา", channel: "Website Chat", tag: "ติดตามแผนรักษา", branch: "a", time: "09:18", state: "AI ร่างคำตอบ", patient: "ผู้รับบริการตัวอย่าง 03", messages: [{ who: "คนไข้", text: "ขอให้เจ้าหน้าที่ช่วยตรวจสอบสถานะแผนที่เคยคุยไว้ค่ะ" }, { who: "AI draft", text: "รับเรื่องไว้แล้วครับ ผมจะส่งต่อทีมคลินิกให้ตรวจสอบบริบทเดิมและติดต่อกลับ" }] },
+      { title: "ขอเลื่อนนัด", channel: "LINE OA", tag: "ขอเลื่อนนัด", branch: "a", time: "08:56", state: "รอคนรับช่วง", patient: "ผู้รับบริการตัวอย่าง 02", messages: [{ who: "คนไข้", text: "ขอเลื่อนนัดวันนี้ไปช่วงอื่นได้ไหมคะ" }, { who: "AI draft", text: "ผมช่วยตรวจช่วงเวลาอื่นของสาขาเดิมให้ได้ ขอให้เจ้าหน้าที่ตรวจสอบก่อนยืนยันนะครับ" }] },
+      { title: "สอบถามทั่วไป", channel: "Website Chat", tag: "สอบถามทั่วไป", branch: "c", time: "08:37", state: "ตอบแล้ว", patient: "ผู้รับบริการตัวอย่าง 04", messages: [{ who: "คนไข้", text: "คลินิกเปิดรับนัดวันหยุดหรือไม่คะ" }, { who: "เจ้าหน้าที่", text: "ทีมงานตรวจสอบเวลาเปิดของสาขา C และตอบกลับตามข้อมูลที่อนุมัติแล้ว" }] }
+    ];
+
+    const financeRows = [
+      { invoice: "SYN-INV-1004", patient: "ผู้รับบริการตัวอย่าง 01", branch: "a", serviceBranch: "สาขา A", payBranch: "สาขา B", entity: "นิติบุคคล 1", amount: "฿ 18,600", status: "ชำระบางส่วน", statusClass: "pending", age: "1–7 วัน" },
+      { invoice: "SYN-INV-1008", patient: "ผู้รับบริการตัวอย่าง 03", branch: "b", serviceBranch: "สาขา B", payBranch: "สาขา B", entity: "นิติบุคคล 1", amount: "฿ 7,200", status: "ชำระแล้ว", statusClass: "done", age: "—" },
+      { invoice: "SYN-INV-1011", patient: "ผู้รับบริการตัวอย่าง 04", branch: "c", serviceBranch: "สาขา C", payBranch: "สาขา C", entity: "นิติบุคคล 2", amount: "฿ 24,900", status: "รอชำระ", statusClass: "risk", age: "เกิน 30 วัน" },
+      { invoice: "SYN-INV-1014", patient: "ผู้รับบริการตัวอย่าง 05", branch: "b", serviceBranch: "สาขา B", payBranch: "สาขา A", entity: "นิติบุคคล 1", amount: "฿ 4,500", status: "ชำระแล้ว", statusClass: "done", age: "—" }
+    ];
+
+    // per-scope finance dataset (thousand THB, internally consistent with exec stats)
+    const FIN = {
+      all: { rev: [1420,1520,1610,1700,1780,1840], col: [980,1080,1150,1210,1270,1319], aging: { c:14.2, d7:18.1, d30:8.7, o30:11.4 }, revStr:"฿ 1.84M", colStr:"฿ 1.32M", rate:"71.7%", outStr:"฿ 52.4k", dfCount:"03" },
+      a:   { rev: [700,760,810,860,890,920],       col: [500,560,600,630,660,680],       aging: { c:6.2, d7:7.8, d30:3.1, o30:1.5 },   revStr:"฿ 920k",  colStr:"฿ 680k", rate:"73.9%", outStr:"฿ 18.6k", dfCount:"01" },
+      b:   { rev: [430,470,500,530,555,574],       col: [330,370,395,415,428,438],       aging: { c:3.0, d7:2.6, d30:1.0, o30:0.6 },   revStr:"฿ 574k",  colStr:"฿ 438k", rate:"76.3%", outStr:"฿ 7.2k",  dfCount:"01" },
+      c:   { rev: [280,300,320,335,342,346],       col: [160,175,185,192,198,201],       aging: { c:5.0, d7:7.7, d30:4.6, o30:9.3 },   revStr:"฿ 346k",  colStr:"฿ 201k", rate:"58.1%", outStr:"฿ 26.6k", dfCount:"01" }
+    };
+    const MLAB6 = ["เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย."];
+
+    // Doctor Fee review rows (breakdown; DF computed by approved policy, not a hardcoded UI formula)
+    const dfRows = [
+      { provider: "ผู้ให้บริการสมมติ A", branch: "a", base: "฿ 42,800", lab: "฿ 8,400", disc: "฿ 2,000", df: "฿ 28,800", flag: "แก้ย้อนหลัง 1 รายการ", status: "รอตรวจ", statusClass: "pending" },
+      { provider: "ผู้ให้บริการสมมติ B", branch: "b", base: "฿ 26,500", lab: "฿ 3,200", disc: "฿ 1,500", df: "฿ 16,300", flag: "package แบ่งงวด", status: "รอตรวจ", statusClass: "pending" },
+      { provider: "ผู้ให้บริการสมมติ C", branch: "c", base: "฿ 19,400", lab: "฿ 5,600", disc: "฿ 800",   df: "฿ 9,900",  flag: "งานแก้ (revision)", status: "รอตรวจ", statusClass: "pending" },
+      { provider: "ผู้ให้บริการสมมติ D", branch: "b", base: "฿ 14,200", lab: "฿ 1,100", disc: "฿ 0",     df: "฿ 9,400",  flag: "—", status: "ตรวจแล้ว", statusClass: "confirmed" }
+    ];
+
+    // per-scope operational stats for Reports (synthetic, consistent with exec stats)
+    const BRANCHOPS = {
+      all: { appts: 192, noShow: "5.2%", cancel: "3.8%", plans: 61, lab: 2, recall: 6, revision: 3, returnRate: "68%", consent: "89%" },
+      a:   { appts: 96,  noShow: "3.1%", cancel: "2.9%", plans: 31, lab: 1, recall: 3, revision: 1, returnRate: "72%", consent: "92%" },
+      b:   { appts: 54,  noShow: "5.6%", cancel: "4.1%", plans: 19, lab: 0, recall: 1, revision: 1, returnRate: "66%", consent: "88%" },
+      c:   { appts: 42,  noShow: "8.9%", cancel: "5.0%", plans: 11, lab: 1, recall: 2, revision: 1, returnRate: "61%", consent: "84%" }
+    };
+
+    const iconPaths = {
+      overview: '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>',
+      calendar: '<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M7 2v4M17 2v4M3 9h18M7 13h3M7 17h3M14 13h3"/>',
+      lab: '<path d="M9 3v6l-5.3 8.6A2.3 2.3 0 0 0 5.7 21h12.6a2.3 2.3 0 0 0 2-3.4L15 9V3"/><path d="M8 3h8M7.2 16h9.6"/>',
+      inbox: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v9a2.5 2.5 0 0 1-2.5 2.5H9l-5 4v-4.5A2.5 2.5 0 0 1 2 14.5v-6z"/><path d="M7 9h10M7 13h6"/>',
+      patients: '<circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M17 5.5a3 3 0 0 1 0 5.8M16.5 15.2a5 5 0 0 1 4 4.8"/>',
+      tooth: '<path d="M8.2 5.2C6.8 3.3 3.5 4.2 3.4 7.1c-.1 2.5 1.4 3.5 1.7 6.5.4 4.1 1.4 6.6 3 6.6 1.4 0 1.4-4.2 3.9-4.2s2.5 4.2 3.9 4.2c1.6 0 2.6-2.5 3-6.6.3-3 1.8-4 1.7-6.5-.1-2.9-3.4-3.8-4.8-1.9-1.1 1.5-2.2-.1-3.8-.1s-2.7 1.6-3.8.1Z"/>',
+      finance: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>',
+      reports: '<path d="M4 19V9M10 19V5M16 19v-8M22 19H2"/>',
+      settings: '<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="4"/>',
+      shield: '<path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z"/><path d="m8.5 12 2.2 2.2 4.8-5"/>',
+      menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+      search: '<circle cx="10.8" cy="10.8" r="6.4"/><path d="m16 16 4.5 4.5"/>',
+      bell: '<path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/>',
+      plus: '<path d="M12 5v14M5 12h14"/>',
+      chevron: '<path d="m7 10 5 5 5-5"/>',
+      arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+      lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+      close: '<path d="m6 6 12 12M18 6 6 18"/>',
+      refresh: '<path d="M20 11a8 8 0 0 0-14.7-4L3 10M3 5v5h5M4 13a8 8 0 0 0 14.7 4L21 14M21 19v-5h-5"/>'
+    };
+
+    function icon(name, size = 18) {
+      return `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${iconPaths[name] || ""}</svg>`;
+    }
+
+    function hydrateIcons(root = document) {
+      root.querySelectorAll("[data-icon]").forEach(el => {
+        const name = el.getAttribute("data-icon");
+        const size = el.closest(".nav-icon") ? 18 : 17;
+        el.innerHTML = icon(name, size);
+      });
+    }
+
+    function currentBranch() { return branches.find(branch => branch.key === state.branch) || branches[0]; }
+    function branchName(key) { return (branches.find(branch => branch.key === key) || branches[0]).label; }
+    function isVisible(item) { return state.branch === "all" || item.branch === state.branch; }
+    function visibleAppointments() { return appointments.filter(isVisible); }
+    function visiblePatients() { return patients.filter(isVisible); }
+    function visibleLabs() { return labs.filter(isVisible); }
+    function visibleConversations() { return conversations.filter(isVisible); }
+
+    function status(text, className) { return `<span class="status ${className}"><span class="status-dot"></span>${text}</span>`; }
+    function badge(text) { return `<span class="badge">${text}</span>`; }
+
+    function contextBanner() {
+      const branch = currentBranch();
+      return `<div class="context-banner"><span class="status-dot"></span><div><strong>กำลังดู: ${branch.label}</strong> · การ์ดทั้งหมดในหน้านี้ใช้ข้อมูลสมมติ</div><div class="context-meta">สิทธิ์: HQ Owner · server เป็นผู้ตัดสิน scope</div></div>`;
+    }
+
+    function pageHeader(eyebrow, title, subtitle, actions = "") {
+      return `<div class="page-head"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p class="page-subtitle">${subtitle}</p></div><div class="head-actions">${actions}</div></div>`;
+    }
+
+    function commonFilterRow(extra = "") {
+      return `<div class="filter-row"><select class="filter-select" aria-label="กรองตามช่วงเวลา"><option>วันนี้ · 16 ก.ย. 2569</option><option>สัปดาห์นี้</option><option>เดือนนี้</option></select><select class="filter-select" aria-label="กรองตามทันตแพทย์"><option>ทันตแพทย์ทุกคน</option><option>ผู้ให้บริการสมมติ A</option><option>ผู้ให้บริการสมมติ B</option></select>${extra}<span class="updated"><span class="status-dot" style="color:var(--brand)"></span>อัปเดตล่าสุด 09:41</span></div>`;
+    }
+
+    const chartRegistry = {};
+    function fmtK(k) { return k >= 1000 ? `฿ ${(k / 1000).toFixed(2)}M` : `฿ ${Math.round(k)}k`; }
+
+    // stacked column chart: collection (green) + outstanding (amber) = revenue
+    function stackedChart(id, rev, col) {
+      const W = 680, H = 232, padL = 42, padR = 12, padT = 14, padB = 30;
+      const plotW = W - padL - padR, plotH = H - padT - padB, base = padT + plotH;
+      const maxV = Math.max(...rev);
+      const step = maxV > 1000 ? 500 : 200;
+      const niceMax = Math.max(step, Math.ceil(maxV / step) * step);
+      const inM = niceMax >= 1000;
+      const y = v => base - (v / niceMax) * plotH;
+      const band = plotW / rev.length, bw = Math.min(40, band * 0.5);
+      chartRegistry[id] = { rev, col, geo: { padL, padT, plotH, base, band, W, niceMax } };
+      let g = "";
+      for (let t = 0; t <= 4; t++) {
+        const val = niceMax * t / 4, yy = y(val);
+        g += `<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${W - padR}" y2="${yy.toFixed(1)}" stroke="var(--border)" stroke-width="1"${t ? "" : ' stroke-opacity="0"'}/>`;
+        g += `<text x="${padL - 8}" y="${(yy + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--muted)">${inM ? (val / 1000).toFixed(1) : val}</text>`;
+      }
+      g += `<text x="${padL - 8}" y="${padT - 3}" text-anchor="end" font-size="9" fill="var(--muted)">${inM ? "ล้าน฿" : "พัน฿"}</text>`;
+      for (let i = 0; i < rev.length; i++) {
+        const cx = padL + band * i + band / 2, x = cx - bw / 2;
+        const yCol = y(col[i]), hCol = base - yCol;
+        const outTop = y(rev[i]), outBottom = yCol - 2, hOut = Math.max(0, outBottom - outTop);
+        g += `<g class="zcol" data-i="${i}">`;
+        g += `<rect x="${(padL + band * i).toFixed(1)}" y="${padT}" width="${band.toFixed(1)}" height="${plotH}" fill="transparent"/>`;
+        g += `<rect class="zseg" x="${x.toFixed(1)}" y="${yCol.toFixed(1)}" width="${bw.toFixed(1)}" height="${hCol.toFixed(1)}" rx="2" fill="var(--c-collect)"/>`;
+        if (hOut > 0.5) g += `<rect class="zseg" x="${x.toFixed(1)}" y="${outTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${hOut.toFixed(1)}" rx="4" fill="var(--c-out)"/>`;
+        g += `</g>`;
+        g += `<text x="${cx.toFixed(1)}" y="${base + 18}" text-anchor="middle" font-size="11" fill="var(--muted)">${MLAB6[i]}</text>`;
+      }
+      return `<div class="zchart-wrap"><svg class="zchart" data-chart="${id}" viewBox="0 0 ${W} ${H}" role="img" aria-label="กราฟรายรับ รับชำระ และยอดค้าง 6 เดือน (ข้อมูลตัวอย่าง)">${g}</svg><div class="ztip" data-tip="${id}"></div></div>`;
+    }
+
+    function agingBar(a) {
+      const rows = [["ยังไม่เกินกำหนด", a.c, "var(--brand)"], ["1–7 วัน", a.d7, "var(--info)"], ["8–30 วัน", a.d30, "var(--c-out)"], ["เกิน 30 วัน", a.o30, "var(--danger)"]];
+      const total = rows.reduce((s, r) => s + r[1], 0);
+      return `<div class="age-bar">${rows.map(r => `<i style="background:${r[2]};flex:${r[1]} 0 0" title="${r[0]}"></i>`).join("")}</div>`
+        + `<div class="age-legend">${rows.map(r => `<div class="age-row"><span class="age-sw" style="background:${r[2]}"></span><span class="age-nm">${r[0]}</span><strong>฿ ${r[1].toFixed(1)}k</strong><span class="age-pc">${total ? Math.round(r[1] / total * 100) : 0}%</span></div>`).join("")}</div>`;
+    }
+
+    function bindCharts(root) {
+      Object.keys(chartRegistry).forEach(id => {
+        const svg = root.querySelector(`.zchart[data-chart="${id}"]`);
+        if (!svg) return;
+        const reg = chartRegistry[id], wrap = svg.closest(".zchart-wrap"), tip = wrap.querySelector(`.ztip[data-tip="${id}"]`);
+        svg.querySelectorAll(".zcol").forEach(gEl => {
+          const i = Number(gEl.dataset.i), gg = reg.geo;
+          const move = () => {
+            const sr = svg.getBoundingClientRect(), wr = wrap.getBoundingClientRect(), scale = sr.width / gg.W;
+            const cx = gg.padL + gg.band * i + gg.band / 2, yTop = gg.base - (reg.rev[i] / gg.niceMax) * gg.plotH;
+            tip.style.left = `${(sr.left - wr.left) + cx * scale}px`;
+            tip.style.top = `${(sr.top - wr.top) + yTop * scale}px`;
+            tip.innerHTML = `<div class="zt-m">${MLAB6[i]} 2569</div>`
+              + `<div class="zt-r"><span><i style="background:var(--c-collect)"></i>รับชำระ</span><b>${fmtK(reg.col[i])}</b></div>`
+              + `<div class="zt-r"><span><i style="background:var(--c-out)"></i>ยอดค้าง</span><b>${fmtK(reg.rev[i] - reg.col[i])}</b></div>`
+              + `<div class="zt-r zt-sep"><span>รายรับรวม</span><b>${fmtK(reg.rev[i])}</b></div>`
+              + `<div class="zt-r"><span>อัตราเก็บเงิน</span><b>${(reg.rev[i] ? reg.col[i] / reg.rev[i] * 100 : 0).toFixed(1)}%</b></div>`;
+            tip.classList.add("show");
+          };
+          gEl.addEventListener("mousemove", move);
+          gEl.addEventListener("mouseenter", move);
+          gEl.addEventListener("mouseleave", () => tip.classList.remove("show"));
+        });
+      });
+    }
+
+    function renderDashboard() {
+      return renderExecutiveDashboard();
+      const appts = visibleAppointments();
+      const labRisk = visibleLabs().filter(lab => lab.risk).length;
+      const patientCount = visiblePatients().length;
+      return `${
+        pageHeader("CONTROL TOWER", "ภาพรวมเครือคลินิก", "สัญญาณสำคัญของทุกสาขาในมุมมองเดียว พร้อมเปิดงานต่อได้ทันที", `<button class="secondary-btn" data-action="view-reports">ดูรายงาน <span data-icon="arrow"></span></button><button class="primary-btn" data-action="create-appointment"><span data-icon="plus"></span>สร้างนัดหมาย</button>`)
+      }${contextBanner()}${commonFilterRow(`<select class="filter-select" aria-label="กรองตามสถานะ"><option>ทุกสถานะ</option><option>ยืนยันแล้ว</option><option>รอยืนยัน</option><option>ยกเลิกแล้ว</option></select>`)}
+      <div class="metric-grid">
+        <button class="metric-card" data-action="metric" data-label="นัดหมายวันนี้"><div class="metric-top"><span>นัดหมายวันนี้</span><span class="metric-icon">${icon("calendar", 16)}</span></div><div class="metric-value">${appts.length + 13}</div><div class="metric-note"><strong>${appts.filter(a => a.status === "ยืนยันแล้ว").length + 9} ยืนยันแล้ว</strong> · ${appts.filter(a => a.status === "รอยืนยัน").length + 2} รอยืนยัน</div></button>
+        <button class="metric-card" data-action="metric" data-label="คิวหน้างาน"><div class="metric-top"><span>คิวหน้างาน</span><span class="metric-icon">${icon("patients", 16)}</span></div><div class="metric-value">08</div><div class="metric-note"><strong>03 รอเรียก</strong> · 02 อยู่บนเก้าอี้</div></button>
+        <button class="metric-card" data-action="metric" data-label="งานแล็บเสี่ยง"><div class="metric-top"><span>งานแล็บเสี่ยง</span><span class="metric-icon" style="color:var(--danger);background:var(--danger-soft)">${icon("lab", 16)}</span></div><div class="metric-value">${labRisk + 1}</div><div class="metric-note"><strong>ต้องทำต่อวันนี้</strong> · นัดใส่ใน 3 วัน</div></button>
+        <button class="metric-card" data-action="metric" data-label="ยอดค้าง"><div class="metric-top"><span>ยอดค้าง</span><span class="metric-icon" style="color:var(--warning);background:var(--warning-soft)">${icon("finance", 16)}</span></div><div class="metric-value">฿ 52.4k</div><div class="metric-note"><strong>4 aging buckets</strong> · ตามสิทธิ์การเงิน</div></button>
+        <button class="metric-card" data-action="metric" data-label="คนไข้ที่ต้องติดตาม"><div class="metric-top"><span>ต้องติดตาม</span><span class="metric-icon" style="color:var(--info);background:var(--info-soft)">${icon("inbox", 16)}</span></div><div class="metric-value">06</div><div class="metric-note"><strong>${patientCount + 2} คนไข้ใน scope</strong> · recall / แผน / แล็บ</div></button>
+      </div>
+
+      <div class="grid-2">
+        <section class="card card-pad">
+          <div class="card-head"><div><h2>สิ่งที่ต้องทำต่อ</h2><p>เรียงตามความเร่งด่วนและผู้รับผิดชอบ</p></div><button class="action-link" data-action="open-tasks">เปิดทั้งหมด <span data-icon="arrow"></span></button></div>
+          <div class="task-list">
+            <div class="task-item"><span class="task-marker danger"></span><div class="task-copy"><strong>ตรวจงานแล็บ 2 รายการก่อนวันนัดใส่</strong><span>กำหนดรับชน/ใกล้ชนวันนัด · สาขา A และ C</span></div><span class="task-owner">ผู้ช่วย</span></div>
+            <div class="task-item"><span class="task-marker"></span><div class="task-copy"><strong>ยืนยันนัดที่ยังอยู่ในสถานะรอยืนยัน</strong><span>ต้องตรวจ policy หมดอายุและ resource impact</span></div><span class="task-owner">เคาน์เตอร์</span></div>
+            <div class="task-item"><span class="task-marker info"></span><div class="task-copy"><strong>ตรวจ DF รายการที่มีส่วนลดหรือค่าแล็บ</strong><span>แสดงฐานคำนวณและ audit trail ก่อนส่งตรวจ</span></div><span class="task-owner">การเงิน</span></div>
+          </div>
+          <div class="insight-strip"><div class="insight-icon">${icon("arrow", 15)}</div><div><strong>มุมมองถัดไปที่แนะนำ</strong><span>เปิด Lab Control Tower เพื่อดูงานที่มี buffer ต่ำก่อน</span></div><button class="action-link" data-view="labs">เปิดงาน</button></div>
+        </section>
+        <section class="card card-pad">
+          <div class="card-head"><div><h2>ภาพรวมตามสาขา</h2><p>ข้อมูลตัวอย่าง · คลิกเพื่อเจาะดูสาขา</p></div><span class="badge">3 สาขา</span></div>
+          <div class="branch-table">
+            <div class="branch-row header"><div>สาขา</div><div>นัด</div><div>คิวรอ</div><div>Lab risk</div><div>ยอดค้าง</div><div>sync</div></div>
+            <button class="branch-row" data-branch="a"><div class="branch-name"><span class="branch-swatch"></span><span>สาขา A<span class="branch-meta">4 เก้าอี้ · เปิดรับนัด</span></span></div><div class="number">18</div><div class="number">02</div><div class="number warning">01</div><div class="number">฿ 18k</div><div class="tiny-status">09:41</div></button>
+            <button class="branch-row" data-branch="b"><div class="branch-name"><span class="branch-swatch" style="background:var(--info)"></span><span>สาขา B<span class="branch-meta">3 เก้าอี้ · เปิดรับนัด</span></span></div><div class="number">24</div><div class="number">05</div><div class="number danger">02</div><div class="number">฿ 22k</div><div class="tiny-status">09:39</div></button>
+            <button class="branch-row" data-branch="c"><div class="branch-name"><span class="branch-swatch" style="background:var(--warning)"></span><span>สาขา C<span class="branch-meta">2 เก้าอี้ · เปิดรับนัด</span></span></div><div class="number">11</div><div class="number">01</div><div class="number">00</div><div class="number">฿ 12k</div><div class="tiny-status">09:40</div></button>
+          </div>
+        </section>
+      </div>
+
+      <div class="grid-3 page-section">
+        <section class="card card-pad"><div class="card-head"><div><h2>คิววันนี้</h2><p>แสดง branch context ทุกนัด</p></div><button class="action-link" data-view="schedule">ดูตาราง</button></div><div class="mini-timeline">${appts.slice(0, 3).map(appt => `<div class="timeline-row"><div class="timeline-time">${appt.time}</div><div class="timeline-event"><strong>${appt.patient}</strong><span>${appt.procedure} · ${branchName(appt.branch)}</span><div class="event-badges">${status(appt.status, appt.statusClass)}${badge(appt.source)}</div></div></div>`).join("")}</div></section>
+        <section class="card card-pad"><div class="card-head"><div><h2>แผนการรักษา</h2><p>แยก “ตอบรับ” จาก “เริ่มรักษา”</p></div><button class="action-link" data-view="treatment">ดูแผน</button></div><div class="task-list"><div class="task-item"><span class="task-marker"></span><div class="task-copy"><strong>2 แผนรอการตอบรับ</strong><span>ติดตามอายุข้อเสนอและผู้รับผิดชอบ</span></div><span class="task-owner">เปิด</span></div><div class="task-item"><span class="task-marker info"></span><div class="task-copy"><strong>5 แผนกำลังรักษา</strong><span>มี progress จาก encounter ล่าสุด</span></div><span class="task-owner">ดู</span></div><div class="task-item"><span class="task-marker danger"></span><div class="task-copy"><strong>1 เคสจัดฟันเลยรอบ recall</strong><span>เปิดงานติดตาม ไม่เลื่อนนัดอัตโนมัติ</span></div><span class="task-owner">ติดตาม</span></div></div></section>
+        <section class="card card-pad"><div class="card-head"><div><h2>รายรับ / รับชำระ / DF</h2><p>ข้อมูลตัวอย่าง · สรุปตาม policy</p></div><button class="action-link" data-view="finance">เปิดการเงิน</button></div><div class="bar-chart"><div class="bar-col"><div class="bar" style="height:44%"></div><span>จ.</span></div><div class="bar-col"><div class="bar" style="height:64%"></div><span>อ.</span></div><div class="bar-col"><div class="bar" style="height:52%"></div><span>พ.</span></div><div class="bar-col"><div class="bar" style="height:75%"></div><span>พฤ.</span></div><div class="bar-col"><div class="bar current" style="height:88%"></div><span>ศ.</span></div><div class="bar-col"><div class="bar" style="height:57%"></div><span>ส.</span></div><div class="bar-col"><div class="bar" style="height:38%"></div><span>อา.</span></div></div><div class="chart-legend"><span><i class="current"></i>วันนี้</span><span><i></i>วันก่อนหน้า</span></div></section>
+      </div>
+      <div class="prototype-footer">Prototype data only · ไม่มี API, database, realtime sync หรือสิทธิ์ production ในไฟล์นี้</div>`;
+    }
+
+    function renderExecutiveDashboard() {
+      const scopedBranches = state.branch === "all" ? branches.slice(1) : branches.filter(branch => branch.key === state.branch);
+      const scopedLabs = visibleLabs();
+      const labRisk = scopedLabs.filter(lab => lab.risk).length;
+      const scopeName = currentBranch().label;
+      const stats = {
+        a: { revenue: "฿ 920k", collected: "฿ 680k", collectionRate: "73.9%", outstanding: "฿ 18.6k", appointments: "96", cancellations: "2.9%", plans: "31", labRisk: "01", noShow: "3.1%", decision: "03", health: "สุขภาพดี", healthClass: "confirmed", sync: "09:41" },
+        b: { revenue: "฿ 574k", collected: "฿ 438k", collectionRate: "76.3%", outstanding: "฿ 7.2k", appointments: "54", cancellations: "4.1%", plans: "19", labRisk: "00", noShow: "5.6%", decision: "02", health: "ติดตาม", healthClass: "pending", sync: "09:39" },
+        c: { revenue: "฿ 346k", collected: "฿ 201k", collectionRate: "58.1%", outstanding: "฿ 26.6k", appointments: "42", cancellations: "5.0%", plans: "11", labRisk: "01", noShow: "8.9%", decision: "04", health: "ต้องดู", healthClass: "risk", sync: "09:36" }
+      };
+      const totals = state.branch === "all" ? { revenue: "฿ 1.84M", collected: "฿ 1.32M", collectionRate: "71.7%", outstanding: "฿ 52.4k", appointments: "192", cancellations: "3.8%", labRisk: "02", decision: "06" } : stats[state.branch];
+      const branchRows = scopedBranches.map(branch => {
+        const item = stats[branch.key];
+        return `<tr><td><div class="exec-branch-name"><span class="branch-dot" style="background:${branch.color}"></span><strong>${branch.label}</strong></div></td><td><strong>${item.revenue}</strong></td><td>${item.collected}</td><td>${item.outstanding}</td><td>${item.appointments}<br><span class="table-sub">no-show ${item.noShow}</span></td><td>${item.plans}</td><td>${item.labRisk === "00" ? status("ปกติ", "confirmed") : status(`${item.labRisk} เสี่ยง`, "risk")}</td><td><div class="exec-branch-health">${status(item.health, item.healthClass)}<small>sync ${item.sync}</small></div></td><td><button class="text-btn" data-branch="${branch.key}">ดูสาขา</button></td></tr>`;
+      }).join("");
+      const F = FIN[state.branch] || FIN.all;
+      const labDecisionStatus = labRisk ? status("ต้องดู", "risk") : status("ปกติ", "confirmed");
+      return `${
+        pageHeader("EXECUTIVE CONTROL TOWER", "ภาพรวมเครือคลินิก", "ตัดสินใจจากสุขภาพรายรับ สาขา pipeline การรักษา และความเสี่ยงที่ต้องจัดการ", `<button class="secondary-btn" data-view="reports"><span data-icon="reports"></span>ดูรายงาน</button><button class="primary-btn" data-view="finance"><span data-icon="finance"></span>เปิดการเงิน</button>`)
+      }${contextBanner()}
+      <div class="exec-toolbar"><div class="exec-toolbar-copy"><strong>${scopeName}</strong><span>·</span><span>มุมมองผู้บริหาร</span><span class="badge">ข้อมูลตัวอย่าง</span></div><div class="exec-toolbar-actions"><select class="filter-select" aria-label="เลือกช่วงเวลารายงาน"><option>เดือนนี้ · ก.ย. 2569</option><option>ไตรมาสนี้</option><option>ปีนี้</option></select><select class="filter-select" aria-label="เลือกวิธีเปรียบเทียบ"><option>เทียบช่วงก่อนหน้า</option><option>เทียบเป้าหมาย</option></select><span class="updated"><span class="status-dot" style="color:var(--brand)"></span>sync ล่าสุด 09:41</span></div></div>
+
+      <div class="metric-grid executive-metrics">
+        <article class="metric-card exec-metric"><div class="metric-top"><span>รายรับรวม</span><span class="metric-icon">${icon("finance", 16)}</span></div><div class="metric-value">${totals.revenue}</div><div class="metric-note"><strong>+8.4%</strong> เทียบช่วงก่อนหน้า</div></article>
+        <article class="metric-card exec-metric"><div class="metric-top"><span>รับชำระแล้ว</span><span class="metric-icon">${icon("finance", 16)}</span></div><div class="metric-value">${totals.collected}</div><div class="metric-note"><strong>${totals.collectionRate}</strong> ของรายรับใน scope</div></article>
+        <article class="metric-card exec-metric"><div class="metric-top"><span>ยอดค้าง / aging</span><span class="metric-icon" style="color:var(--warning);background:var(--warning-soft)">${icon("finance", 16)}</span></div><div class="metric-value">${totals.outstanding}</div><div class="metric-note"><strong>4 buckets</strong> · ดูสิทธิ์การเงิน</div></article>
+        <article class="metric-card exec-metric"><div class="metric-top"><span>นัดหมายในช่วงนี้</span><span class="metric-icon">${icon("calendar", 16)}</span></div><div class="metric-value">${totals.appointments}</div><div class="metric-note"><strong>no-show ${state.branch === "all" ? "5.2%" : totals.noShow}</strong> · ยกเลิก ${totals.cancellations}</div></article>
+        <article class="metric-card exec-metric"><div class="metric-top"><span>รายการต้องตัดสินใจ</span><span class="metric-icon" style="color:var(--danger);background:var(--danger-soft)">${icon("shield", 16)}</span></div><div class="metric-value">${totals.decision}</div><div class="metric-note"><strong>lab ${totals.labRisk}</strong> · DF · recall</div></article>
+      </div>
+
+      <div class="grid-2 exec-content-grid">
+        <section class="card card-pad exec-card"><div class="exec-card-head"><div><h2>รายรับ · รับชำระ · ยอดค้าง</h2><p>แนวโน้ม 6 เดือน · รับชำระ + ยอดค้าง = รายรับ</p></div><span class="badge">ล้านบาท</span></div><div class="zlegend"><span><i style="background:var(--c-collect)"></i>รับชำระแล้ว</span><span><i style="background:var(--c-out)"></i>ยอดค้างในงวด</span><span style="margin-left:auto;color:var(--muted)">อัตราเก็บเงินเฉลี่ย <strong style="color:var(--brand-deep)">${F.rate}</strong></span></div>${stackedChart("exec", F.rev, F.col)}<div class="exec-chart-note"><span>ก.ย. 2569 · ${scopeName}</span><strong>รายรับ ${F.revStr} · รับชำระ ${F.colStr}</strong></div></section>
+        <section class="card card-pad exec-card"><div class="exec-card-head"><div><h2>รายการที่ผู้บริหารต้องตัดสินใจ</h2><p>เรียงตาม impact และความเร่งด่วน</p></div><span class="badge">${totals.decision} รายการ</span></div><div class="exec-decision-list"><div class="exec-decision"><div class="exec-decision-icon danger">${icon("lab", 15)}</div><div><strong>Lab timeline ต้อง review</strong><p>${labRisk ? `${String(labRisk).padStart(2, "0")} รายการเสี่ยงใน ${scopeName} · ตรวจ buffer ก่อนวันนัดใส่` : `ไม่พบ risk flag ใน ${scopeName} · ตรวจ timeline ต่อได้`}</p></div>${labDecisionStatus}</div><div class="exec-decision"><div class="exec-decision-icon">${icon("finance", 15)}</div><div><strong>DF มี rule flag</strong><p>03 รายการรอตรวจสูตร ค่าแล็บ ส่วนลด และการแก้ย้อนหลัง</p></div><span class="status pending">รอ review</span></div><div class="exec-decision"><div class="exec-decision-icon info">${icon("patients", 15)}</div><div><strong>นโยบายโอนเคสข้ามสาขา</strong><p>ต้องอนุมัติ scope, consent, provider และ audit ก่อนเปิดใช้</p></div><button class="action-link" data-view="settings">เปิด policy</button></div></div></section>
+      </div>
+
+      <section class="card exec-branch-card"><div class="card-head card-pad" style="padding-bottom:13px"><div><h2>เปรียบเทียบสุขภาพรายสาขา</h2><p>ดู performance และสัญญาณผิดปกติในระดับที่ใช้คุยกับผู้จัดการสาขา</p></div><span class="exec-data-note"><span class="status-dot"></span>scope: ${scopeName}</span></div><div class="table-wrap" style="border:0;border-radius:0"><table><thead><tr><th>สาขา</th><th>รายรับ</th><th>รับชำระ</th><th>ยอดค้าง</th><th>นัดหมาย / no-show</th><th>แผนกำลังรักษา</th><th>lab risk</th><th>สุขภาพสาขา</th><th></th></tr></thead><tbody>${branchRows || `<tr><td colspan="9"><div class="empty-state">ไม่พบข้อมูลใน scope นี้</div></td></tr>`}</tbody></table></div></section>
+
+      <div class="grid-2 exec-lower-grid">
+        <section class="card card-pad"><div class="exec-card-head"><div><h2>Patient → Treatment pipeline</h2><p>ดูคอขวดของแผนรักษาในเครือ</p></div><button class="action-link" data-view="treatment">เปิด pipeline</button></div><div class="exec-funnel"><div class="exec-funnel-row"><span>ร่าง</span><div class="exec-funnel-track"><i style="width:46%"></i></div><strong>18</strong></div><div class="exec-funnel-row"><span>เสนอแล้ว</span><div class="exec-funnel-track"><i class="alt" style="width:68%"></i></div><strong>27</strong></div><div class="exec-funnel-row"><span>ตอบรับแล้ว</span><div class="exec-funnel-track"><i class="alt" style="width:38%"></i></div><strong>15</strong></div><div class="exec-funnel-row"><span>กำลังรักษา</span><div class="exec-funnel-track"><i style="width:100%"></i></div><strong>39</strong></div><div class="exec-funnel-row"><span>เสร็จสิ้น</span><div class="exec-funnel-track"><i class="warn" style="width:56%"></i></div><strong>22</strong></div></div></section>
+        <section class="card card-pad"><div class="exec-card-head"><div><h2>Risk signals</h2><p>รายการที่ควรดูต่อโดยเจ้าของงาน</p></div><button class="action-link" data-view="labs">ดู risk ทั้งหมด</button></div><div class="exec-risk-list"><div class="exec-risk-row"><div><strong>งานแล็บใกล้หลุด buffer</strong><span>${labRisk ? `${labRisk} รายการ · นัดใส่ใน 3 วัน` : "ไม่พบรายการใน scope"}</span></div>${labRisk ? status("ต้องดู", "risk") : status("ปกติ", "confirmed")}</div><div class="exec-risk-row"><div><strong>ยอดค้างที่ต้องติดตาม</strong><span>${totals.outstanding} · ตามสิทธิ์ Finance</span></div><span class="status pending"><span class="status-dot"></span>ติดตาม</span></div><div class="exec-risk-row"><div><strong>Recall ยังไม่ได้นัด</strong><span>${state.branch === "all" ? "06" : "02"} คนไข้ · ตรวจ owner และ channel</span></div><span class="status pending"><span class="status-dot"></span>ติดตาม</span></div></div></section>
+      </div>
+      <div class="prototype-footer">ข้อมูลทั้งหมดเป็น synthetic demo · metric, policy, สิทธิ์ และตัวเลขจริงต้องเชื่อม server และผ่านการอนุมัติก่อนใช้ production</div>`;
+    }
+
+    function renderSchedule() {
+      const appts = visibleAppointments();
+      const cardFor = (time, resource, extraClass = "") => {
+        const appt = appts.find(a => a.time === time && a.chair === resource);
+        return appt ? `<button class="appointment-card ${extraClass || (appt.statusClass === "pending" ? "pending" : "")}" data-appointment="${appt.id}"><strong>${appt.patient}</strong><span>${appt.procedure} · ${appt.duration}</span><span>${appt.status} · ${branchName(appt.branch)}</span></button>` : `<span class="schedule-empty">—</span>`;
+      };
+      return `${pageHeader("BOOKING + QUEUE", "นัดหมายและคิว", "ตารางเดียวสำหรับเคาน์เตอร์, LINE OA และ Website Chat พร้อม resource ที่ต้องว่างพร้อมกัน", `<div class="segmented"><button class="active">วัน</button><button>สัปดาห์</button><button>เดือน</button></div><button class="primary-btn" data-action="create-appointment"><span data-icon="plus"></span>สร้างนัดหมาย</button>`)}${contextBanner()}${commonFilterRow(`<select class="filter-select" aria-label="กรองตามเก้าอี้"><option>เก้าอี้ทุกตัว</option><option>เก้าอี้ 01</option><option>เก้าอี้ 02</option></select><select class="filter-select" aria-label="กรองตามช่องทาง"><option>ทุกช่องทาง</option><option>LINE OA</option><option>Website Chat</option></select>`)}
+      <div class="schedule-layout"><section class="card schedule-board"><div style="overflow-x:auto"><div class="schedule-header"><div>resource / เวลา</div><div>09:00</div><div>10:00</div><div>11:00</div><div>13:00</div><div>14:30</div></div><div class="resource-row"><div class="resource-label"><strong>สาขา A · เก้าอี้ 01</strong><span>ผู้ให้บริการสมมติ A</span></div><div class="resource-cell">${cardFor("09:00", "เก้าอี้ 01")}</div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">—</div></div><div class="resource-row"><div class="resource-label"><strong>สาขา A · เก้าอี้ 02</strong><span>ผู้ให้บริการสมมติ B</span></div><div class="resource-cell">—</div><div class="resource-cell">${cardFor("10:30", "เก้าอี้ 02")}</div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">—</div></div><div class="resource-row"><div class="resource-label"><strong>สาขา B · เก้าอี้ 01</strong><span>ผู้ให้บริการสมมติ C</span></div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">${cardFor("11:00", "เก้าอี้ 01")}</div><div class="resource-cell">—</div><div class="resource-cell">—</div></div><div class="resource-row"><div class="resource-label"><strong>สาขา C · เก้าอี้ 03</strong><span>ผู้ให้บริการสมมติ A</span></div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">—</div><div class="resource-cell">${cardFor("13:00", "เก้าอี้ 03")}</div><div class="resource-cell">—</div></div></div></section><aside class="schedule-aside"><section class="card card-pad"><div class="card-head"><div><h2>สถานะนัดหมาย</h2><p>ใช้ข้อความ + สี + icon ร่วมกัน</p></div></div><div class="legend-list"><div class="legend-row"><span class="legend-swatch"></span>ยืนยันแล้ว</div><div class="legend-row"><span class="legend-swatch pending"></span>รอยืนยัน</div><div class="legend-row"><span class="legend-swatch completed"></span>เสร็จสิ้น</div><div class="legend-row"><span class="legend-swatch block"></span>เตรียม / ฆ่าเชื้อ</div></div></section><section class="card card-pad"><div class="card-head"><div><h2>คิวหน้างาน</h2><p>${state.branch === "all" ? "เลือกสาขาก่อนเปลี่ยนสถานะ" : `กำลังดู ${branchName(state.branch)}`}</p></div><button class="action-link" data-action="open-queue">เปิดคิว</button></div><div class="task-list"><div class="task-item"><span class="task-marker"></span><div class="task-copy"><strong>รอเรียก 03</strong><span>ตัวจับเวลารอเริ่มแล้ว</span></div></div><div class="task-item"><span class="task-marker info"></span><div class="task-copy"><strong>อยู่บนเก้าอี้ 02</strong><span>เชื่อม encounter ปัจจุบัน</span></div></div></div></section></aside></div><div class="page-section"><div class="page-section-head"><div><h2>รายการนัดหมาย</h2><p>ทุกการยืนยันต้องตรวจและล็อกเก้าอี้ + ทันตแพทย์ที่ server</p></div><span class="badge">${appts.length} รายการใน scope</span></div><div class="table-wrap"><table><thead><tr><th>เวลา</th><th>คนไข้</th><th>หัตถการ</th><th>สาขา</th><th>resource</th><th>ช่องทาง</th><th>สถานะ</th></tr></thead><tbody>${appts.map(appt => `<tr class="clickable-row" data-appointment="${appt.id}"><td><strong>${appt.time}</strong><br><span style="font-size:10px;color:var(--muted)">${appt.duration}</span></td><td class="person-cell"><strong>${appt.patient}</strong><span>${appt.hn}</span></td><td>${appt.procedure}</td><td>${badge(branchName(appt.branch))}</td><td>${appt.chair}<br><span style="font-size:10px;color:var(--muted)">${appt.provider}</span></td><td>${badge(appt.source)}</td><td>${status(appt.status, appt.statusClass)}</td></tr>`).join("")}</tbody></table></div></div><div class="prototype-footer">เวลาเตรียม/พัก/ทำความสะอาดเป็น configuration ของสาขา · slot availability ต้องมาจาก server</div>`;
+    }
+
+    function renderQueue() {
+      const columns = [{ title: "รอเรียก", count: "03", items: ["ผู้รับบริการตัวอย่าง 02", "ผู้รับบริการตัวอย่าง 06"] }, { title: "เรียกแล้ว", count: "01", items: ["ผู้รับบริการตัวอย่าง 01"] }, { title: "อยู่บนเก้าอี้", count: "02", items: ["ผู้รับบริการตัวอย่าง 03", "ผู้รับบริการตัวอย่าง 07"] }, { title: "รอชำระเงิน", count: "01", items: ["ผู้รับบริการตัวอย่าง 04"] }, { title: "เสร็จสิ้น", count: "12", items: ["ผู้รับบริการตัวอย่าง 08"] }];
+      return `${pageHeader("QUEUE", "คิวหน้างาน", "เช็กอินและเคลื่อนสถานะตามงานจริง โดยไม่เปิดข้อมูลเกินสิทธิ์", `<button class="secondary-btn" data-view="schedule"><span data-icon="calendar"></span>กลับตาราง</button><button class="primary-btn" data-action="walk-in"><span data-icon="plus"></span>เพิ่ม walk-in</button>`)}${contextBanner()}${commonFilterRow(`<select class="filter-select" aria-label="กรองตามเก้าอี้"><option>เก้าอี้ทุกตัว</option><option>เก้าอี้ 01</option><option>เก้าอี้ 02</option></select>`)}<div class="queue-grid">${columns.map((column, index) => `<section class="queue-column"><div class="queue-column-head"><strong>${column.title}</strong><span>${column.count}</span></div><div class="queue-cards">${column.items.map((item, itemIndex) => `<div class="queue-card"><strong>${item}</strong><span>${itemIndex % 2 ? "walk-in · " : "10:30 · "}${index === 3 ? "ยอดคงเหลือตามสิทธิ์การเงิน" : "หัตถการสมมติ · เก้าอี้ 01"}</span><div class="queue-actions">${index === 0 ? `<button class="secondary-btn small-btn" data-action="queue-call">เรียก</button><button class="secondary-btn small-btn" data-action="queue-skip">ข้าม</button>` : index === 1 ? `<button class="secondary-btn small-btn" data-action="queue-recall">เรียกซ้ำ</button>` : index === 3 ? `<button class="primary-btn small-btn" data-view="finance">ส่งต่อการเงิน</button>` : `<button class="secondary-btn small-btn" data-action="queue-open">เปิดบริบท</button>`}</div></div>`).join("")}</div></section>`).join("")}</div><div class="card card-pad page-section"><div class="card-head"><div><h2>กติกาคิว</h2><p>walk-in, เรียกซ้ำ, ข้ามคิว และตัวจับเวลารอเป็น operation ของสาขาปัจจุบัน</p></div><span class="badge">ต้องเลือก branch ก่อนแก้สถานะ</span></div><div class="grid-3"><div class="protected-box" style="margin-top:0"><strong>${icon("lock", 14)} Check-in gate</strong><p>ยืนยันสาขาและนัดที่ถูกต้องก่อนสร้าง encounter</p></div><div class="protected-box" style="margin-top:0"><strong>${icon("refresh", 14)} Server response</strong><p>เปลี่ยนสถานะหลัง server ยืนยัน ไม่ใช้ optimistic state เป็น contract</p></div><div class="protected-box" style="margin-top:0"><strong>${icon("finance", 14)} Payment handoff</strong><p>ส่งต่อยอดคงเหลือโดยไม่เปิด clinical record เกิน role</p></div></div></div>`;
+    }
+
+    function renderPatients() {
+      const list = visiblePatients();
+      const selected = list[state.selectedPatient % Math.max(list.length, 1)] || patients[0];
+      return `${pageHeader("PATIENT 360", "คนไข้ / Patient 360", "หนึ่ง master record ต่อหนึ่งคนไข้ภายใน tenant พร้อมประวัติการมารับบริการแยกตามสาขา", `<button class="secondary-btn" data-action="duplicate-review"><span data-icon="search"></span>ตรวจ duplicate</button><button class="primary-btn" data-action="new-patient"><span data-icon="plus"></span>ลงทะเบียนคนไข้</button>`)}${contextBanner()}<div class="filter-row"><div class="topbar-search" style="max-width:360px;margin:0"><span class="search-icon" data-icon="search"></span><input aria-label="ค้นหาคนไข้" placeholder="ค้นหา HN / ชื่อ / เบอร์ที่ได้รับอนุญาต"></div><select class="filter-select" aria-label="กรองแท็ก"><option>ทุก tag</option><option>มีแผนค้าง</option><option>รอแล็บ</option><option>ถึงกำหนด recall</option></select><span class="updated">${list.length} รายการใน scope</span></div><div class="patient-layout"><section><div class="card card-pad" style="margin-bottom:12px"><div class="card-head"><div><h2>ค้นหาและยืนยันตัวตน</h2><p>หากพบคนไข้จากสาขาอื่น ให้ตรวจ role + consent ก่อนเปิด clinical tab</p></div><span class="badge">ข้อมูลสมมติ</span></div><div class="protected-box" style="margin-top:0"><strong>${icon("shield", 14)} Cross-branch identity gate</strong><p>ไม่สร้าง record ใหม่อัตโนมัติเมื่อชื่อ/เบอร์ซ้ำ · ต้องผ่าน duplicate review และ policy ที่อนุมัติ</p></div></div><div class="patient-list">${list.length ? list.map((patient, index) => `<button class="patient-item ${patient.id === selected.id ? "selected" : ""}" data-patient-index="${index}"><span class="patient-avatar">${patient.initials}</span><span class="patient-main"><strong>${patient.name}</strong><span>${patient.id} · last visit ${patient.last}</span><span class="patient-tags">${patient.tags.map(tag => badge(tag)).join("")}</span></span><span class="patient-next">นัดถัดไป<strong>${patient.next}</strong></span></button>`).join("") : `<div class="empty-state"><strong>ยังไม่มีคนไข้ใน scope นี้</strong><p>ลองเปลี่ยนสาขาหรือคำค้นหา</p><button class="secondary-btn" data-branch="all">ดูทุกสาขา</button></div>`}</div></section><aside class="card card-pad patient-summary"><div class="patient-summary-head"><div class="patient-avatar">${selected.initials}</div><div><h2>${selected.name}</h2><div class="section-kicker">${selected.id} · ${branchName(selected.branch)}</div></div></div><div class="patient-tags">${selected.tags.map(tag => badge(tag)).join("")}</div><div class="summary-grid"><div class="summary-row"><span>นัดถัดไป</span><strong>${selected.next}</strong></div><div class="summary-row"><span>แผนการรักษา</span><strong>${selected.plan}</strong></div><div class="summary-row"><span>Consent</span><strong>${selected.consent}</strong></div><div class="summary-row"><span>ยอดค้าง</span><strong>ตามสิทธิ์การเงิน</strong></div></div><div class="protected-box"><strong>${icon("lock", 14)} Clinical context restricted</strong><p>ตัวอย่างนี้แสดงเฉพาะ metadata ที่จำเป็นต่อการประสานงาน คลินิกจริงต้องตรวจ role, assignment และ consent ฝั่ง server</p></div><div class="timeline-mini"><div class="timeline-mini-item"><time>16 ก.ย.</time><div><strong>นัดหมาย / เช็กอิน</strong><span>${branchName(selected.branch)} · context link</span></div></div><div class="timeline-mini-item"><time>02 ก.ย.</time><div><strong>Treatment Record</strong><span>ผู้เขียนและ revision ตามสิทธิ์</span></div></div><div class="timeline-mini-item"><time>25 ส.ค.</time><div><strong>ใบเสร็จ / รับชำระ</strong><span>ลิงก์ไป Finance scope</span></div></div></div><div class="modal-actions" style="justify-content:flex-start"><button class="secondary-btn small-btn" data-action="open-patient-detail">เปิดรายละเอียด</button><button class="primary-btn small-btn" data-action="request-consent">ขอ consent</button></div></aside></div><div class="prototype-footer">ห้ามใช้ชื่อ, HN, อาการ หรือข้อมูลสุขภาพจริงเป็น fixture</div>`;
+    }
+
+    function renderTreatment() {
+      return `${pageHeader("TREATMENT", "การรักษาและแผนการรักษา", "เชื่อม Appointment → Encounter → Treatment Record → Lab → Payment ในบริบทเดียว", `<button class="secondary-btn" data-action="open-odontogram"><span data-icon="tooth"></span>ดู odontogram</button><button class="primary-btn" data-action="new-plan"><span data-icon="plus"></span>สร้างแผนการรักษา</button>`)}${contextBanner()}<div class="filter-row"><select class="filter-select" aria-label="สถานะแผน"><option>ทุกสถานะแผน</option><option>ร่าง</option><option>เสนอแล้ว</option><option>ตอบรับแล้ว</option><option>กำลังรักษา</option><option>เสร็จสิ้น</option></select><select class="filter-select" aria-label="ประเภทเคส"><option>ทุกประเภทเคส</option><option>จัดฟัน</option><option>งานแล็บ</option><option>หัตถการทั่วไป</option></select><span class="updated">แยก “ตอบรับแล้ว” จาก “เริ่มรักษาแล้ว”</span></div><div class="grid-3"><section class="card card-pad"><div class="card-head"><div><h2>แผนที่ต้องติดตาม</h2><p>next action จาก lifecycle</p></div><span class="status pending">03 รายการ</span></div><div class="task-list"><div class="task-item"><span class="task-marker"></span><div class="task-copy"><strong>เสนอแล้ว · รอคำตอบ</strong><span>ข้อเสนอมีอายุและ owner ตาม policy</span></div><span class="task-owner">เปิด</span></div><div class="task-item"><span class="task-marker info"></span><div class="task-copy"><strong>กำลังรักษา · encounter ล่าสุด</strong><span>เชื่อมรายการ treatment และ lab</span></div><span class="task-owner">ดู</span></div><div class="task-item"><span class="task-marker danger"></span><div class="task-copy"><strong>จัดฟัน · เลยรอบ recall</strong><span>เปิดงานติดตามโดยคนรับผิดชอบ</span></div><span class="task-owner">ติดตาม</span></div></div></section><section class="card card-pad"><div class="card-head"><div><h2>Package context</h2><p>จำนวนครั้งและยอดตามสิทธิ์</p></div><span class="badge">Loyalty Basic</span></div><div class="summary-grid"><div class="summary-row"><span>แพ็กเกจตัวอย่าง</span><strong>ใช้แล้ว 3 / 6 ครั้ง</strong></div><div class="summary-row"><span>คงเหลือ</span><strong>3 ครั้ง</strong></div><div class="summary-row"><span>คะแนนสะสม</span><strong>ตาม entitlement</strong></div><div class="summary-row"><span>สาขาเจ้าของเคส</span><strong>${currentBranch().label}</strong></div></div><div class="protected-box"><strong>${icon("shield", 14)} Clinical owner required</strong><p>การเปลี่ยนแผนหรือคำแนะนำทางคลินิกต้องมีผู้เชี่ยวชาญรับผิดชอบ</p></div></section><section class="card card-pad"><div class="card-head"><div><h2>ลำดับงานรักษา</h2><p>ข้อมูลสำคัญจาก source เดียวกัน</p></div><span class="badge">4 linked objects</span></div><div class="timeline-mini"><div class="timeline-mini-item"><time>01</time><div><strong>Appointment</strong><span>นัดหมาย + branch + resource</span></div></div><div class="timeline-mini-item"><time>02</time><div><strong>Encounter</strong><span>เช็กอินและผู้รับผิดชอบ</span></div></div><div class="timeline-mini-item"><time>03</time><div><strong>Treatment Record</strong><span>note + odontogram + file</span></div></div><div class="timeline-mini-item"><time>04</time><div><strong>Lab / Payment</strong><span>status + context link</span></div></div></div></section></div><div class="card page-section"><div class="card-head card-pad" style="padding-bottom:0"><div><h2>รายการแผนการรักษา</h2><p>ตัวอย่างข้อมูลสมมติ · สิทธิ์ clinical และ finance แยกกัน</p></div><button class="action-link" data-action="export-blocked">Export ตามสิทธิ์</button></div><div class="table-wrap" style="border:0;border-radius:0"><table><thead><tr><th>คนไข้</th><th>สาขาเจ้าของเคส</th><th>สถานะ</th><th>รายการ</th><th>จ่ายแล้ว</th><th>คงเหลือ</th><th>next action</th></tr></thead><tbody><tr class="clickable-row" data-action="open-patient-detail"><td class="person-cell"><strong>ผู้รับบริการตัวอย่าง 01</strong><span>SYN-HN-0042</span></td><td>${badge("สาขา A")}</td><td>${status("กำลังรักษา", "confirmed")}</td><td>3 รายการ</td><td>ตามสิทธิ์</td><td>ตามสิทธิ์</td><td><button class="text-btn" data-action="open-plan">เปิดรายละเอียด</button></td></tr><tr><td class="person-cell"><strong>ผู้รับบริการตัวอย่าง 03</strong><span>SYN-HN-0087</span></td><td>${badge("สาขา B")}</td><td>${status("เสนอแล้ว", "pending")}</td><td>2 รายการ</td><td>ตามสิทธิ์</td><td>ตามสิทธิ์</td><td><button class="text-btn" data-action="open-plan">ติดตามข้อเสนอ</button></td></tr><tr><td class="person-cell"><strong>ผู้รับบริการตัวอย่าง 04</strong><span>SYN-HN-0118</span></td><td>${badge("สาขา C")}</td><td>${status("เสร็จสิ้น", "done")}</td><td>4 รายการ</td><td>ตามสิทธิ์</td><td>฿ 0</td><td><button class="text-btn" data-action="open-plan">ดู timeline</button></td></tr></tbody></table></div></div>`;
+    }
+
+    function renderLabs() {
+      const columns = [{ key: "sent", label: "ส่งแล็บแล้ว" }, { key: "production", label: "กำลังผลิต" }, { key: "shipping", label: "กำลังส่งกลับ" }, { key: "clinic", label: "ถึงคลินิกแล้ว" }, { key: "done", label: "ใส่เสร็จ" }];
+      return `${pageHeader("TREATMENT + LAB", "Lab Control Tower", "รู้ว่างานอยู่ที่ไหน จะกลับเมื่อไร และพร้อมกับวันนัดใส่หรือยัง", `<button class="secondary-btn" data-action="lab-policy"><span data-icon="settings"></span>ตั้งค่า risk policy</button><button class="primary-btn" data-action="new-lab"><span data-icon="plus"></span>ส่งงานแล็บ</button>`)}${contextBanner()}<div class="filter-row"><button class="status risk small-btn" data-action="lab-risk-filter">เสี่ยงเท่านั้น · ${visibleLabs().filter(l => l.risk).length}</button><button class="secondary-btn small-btn" data-action="lab-three-days">นัดใส่ใน 3 วัน</button><select class="filter-select" aria-label="กรองตามแล็บ"><option>แล็บทุกแห่ง</option><option>แล็บตัวอย่าง A</option><option>แล็บตัวอย่าง B</option></select><span class="updated">คำนวณ risk ล่าสุด 09:40</span></div><div class="lab-board">${columns.map(column => { const items = visibleLabs().filter(lab => lab.stage === column.key); return `<section class="lab-column"><div class="lab-column-header"><strong>${column.label}</strong><span>${items.length}</span></div><div class="lab-list">${items.length ? items.map(lab => `<button class="lab-card ${lab.riskClass}" data-lab="${lab.id}" style="text-align:left;color:inherit"><div class="lab-card-head"><strong>${lab.title}</strong>${lab.risk ? `<span class="status risk">เสี่ยง</span>` : ""}</div><div class="lab-meta">${lab.type}<br>${lab.lab} · ${branchName(lab.branch)}</div><div class="lab-dates"><div class="lab-date"><span>กำหนดรับ</span><strong>${lab.due}</strong></div><div class="lab-date"><span>วันนัดใส่</span><strong>${lab.fitting}</strong></div></div><div class="lab-card-footer">${lab.risk ? `<span class="risk-copy">${lab.risk}</span>` : `<span class="section-kicker">ไม่มี flag</span>`}<span data-icon="arrow"></span></div></button>`).join("") : `<div class="empty-state"><strong>ไม่มีงานในขั้นนี้</strong><p>เมื่อมีรายการใหม่จะแสดงที่นี่</p></div>`}</div></section>`; }).join("")}</div><div class="grid-2 page-section"><section class="card card-pad"><div class="card-head"><div><h2>กติกาความเสี่ยง</h2><p>แสดงเหตุผลและ owner ไม่ใช่สีอย่างเดียว</p></div><span class="status pending">รอ policy</span></div><div class="task-list"><div class="task-item"><span class="task-marker danger"></span><div class="task-copy"><strong>กำหนดรับชนหรือเลยวันนัดใส่</strong><span>ต้องแจ้งผู้รับผิดชอบและคำนวณใหม่เมื่อมีการเปลี่ยนวัน</span></div></div><div class="task-item"><span class="task-marker"></span><div class="task-copy"><strong>buffer ต่ำกว่า threshold</strong><span>ต้นแบบใช้ 2 วัน · production ต้องให้ owner อนุมัติ threshold</span></div></div><div class="task-item"><span class="task-marker info"></span><div class="task-copy"><strong>ส่งซ่อม / แก้งาน</strong><span>สร้าง revision ใหม่ เก็บเหตุผลและ history เดิมแบบอ่านอย่างเดียว</span></div></div></div></section><section class="card card-pad"><div class="card-head"><div><h2>ตรวจล่วงหน้า 3 วัน</h2><p>ช่วงเวลาที่ทีมยังมีทางเลือกในการประสานงาน</p></div><button class="action-link" data-action="open-lab-list">เปิดรายการ</button></div><div class="insight-strip" style="margin-top:0"><div class="insight-icon">${icon("calendar", 15)}</div><div><strong>3 เคสมีนัดใส่ในช่วงใกล้</strong><span>ตรวจ due date, fitting appointment และปลายทางของงานก่อนเริ่มวัน</span></div></div><div class="protected-box"><strong>${icon("lock", 14)} Approval mode</strong><p>ยังไม่ hard-block การนัดใส่จนกว่า clinical owner จะตัดสิน policy</p></div></section></div>`;
+    }
+
+    function renderFinance() {
+      const scope = state.branch;
+      const F = FIN[scope] || FIN.all;
+      const scopeName = currentBranch().label;
+      const rows = financeRows.filter(row => scope === "all" || row.branch === scope);
+      const dfList = dfRows.filter(row => scope === "all" || row.branch === scope);
+      const dfPending = dfList.filter(row => row.status === "รอตรวจ").length;
+      const filters = `<select class="filter-select" aria-label="กรองสถานะการชำระ"><option>ทุกสถานะ</option><option>ชำระแล้ว</option><option>ชำระบางส่วน</option><option>รอชำระ</option></select><select class="filter-select" aria-label="กรอง aging"><option>ทุก aging</option><option>ยังไม่เกินกำหนด</option><option>1–7 วัน</option><option>8–30 วัน</option><option>เกิน 30 วัน</option></select>`;
+      return `${pageHeader("BILLING · PAYMENT · DOCTOR FEE", "การเงินและ Doctor Fee (DF)", "เจาะดูรายรับ การรับชำระ aging ใบเสร็จ และ DF โดยแยกสาขาให้บริการ สาขารับชำระ นิติบุคคล และเจ้าของ DF", `<button class="secondary-btn" data-action="export-blocked"><span data-icon="shield"></span>Export ตามสิทธิ์</button><button class="primary-btn" data-action="new-payment"><span data-icon="plus"></span>รับชำระ</button>`)}${contextBanner()}${commonFilterRow(filters)}
+      <div class="finance-grid">
+        <div class="finance-metric"><span>รายรับ (เดือนนี้)</span><strong>${F.revStr}</strong><div class="section-kicker"><span class="fin-delta up">+8.4%</span> เทียบเดือนก่อน</div></div>
+        <div class="finance-metric"><span>รับชำระแล้ว</span><strong>${F.colStr}</strong><div class="section-kicker">อัตราเก็บเงิน <strong style="color:var(--brand-deep)">${F.rate}</strong></div></div>
+        <div class="finance-metric"><span>ยอดค้างคงเหลือ</span><strong>${F.outStr}</strong><div class="section-kicker">เกิน 30 วัน <strong style="color:var(--danger)">฿ ${F.aging.o30.toFixed(1)}k</strong></div></div>
+        <div class="finance-metric"><span>DF รอตรวจ</span><strong>${F.dfCount} รายการ</strong><div class="section-kicker">สูตร · ค่าแล็บ · ส่วนลด · แก้ย้อนหลัง</div></div>
+      </div>
+
+      <div class="grid-2">
+        <section class="card card-pad exec-card"><div class="exec-card-head"><div><h2>รายรับ · รับชำระ · ยอดค้าง</h2><p>${scopeName} · 6 เดือนล่าสุด · รับชำระ + ยอดค้าง = รายรับ</p></div><span class="badge">ล้านบาท</span></div><div class="zlegend"><span><i style="background:var(--c-collect)"></i>รับชำระ</span><span><i style="background:var(--c-out)"></i>ยอดค้างในงวด</span><span style="margin-left:auto;color:var(--muted)">อัตราเก็บเงิน <strong style="color:var(--brand-deep)">${F.rate}</strong></span></div>${stackedChart("fin", F.rev, F.col)}</section>
+        <section class="card card-pad"><div class="card-head"><div><h2>ยอดค้างตามอายุหนี้ (Aging)</h2><p>ตามสิทธิ์ Finance · ${scopeName}</p></div><span class="badge">4 buckets</span></div><div style="font-size:22px;font-weight:900;letter-spacing:-.03em">${F.outStr}</div>${agingBar(F.aging)}<div class="insight-strip" style="margin-top:2px"><div class="insight-icon">${icon("arrow", 15)}</div><div><strong>ยอดเกิน 30 วันต้องมอบหมายผู้ติดตาม</strong><span>ก่อนทวงถามต้องตรวจ consent และใช้ template ที่อนุมัติ</span></div><button class="action-link" data-action="open-approval">เปิด</button></div></section>
+      </div>
+
+      <div class="grid-2">
+        <section class="card"><div class="card-head card-pad" style="padding-bottom:13px"><div><h2>บิลและการรับชำระ</h2><p>แต่ละแถวแยกสาขาให้บริการและสาขารับชำระ</p></div><span class="badge">audit enabled · prototype</span></div><div class="table-wrap" style="border:0;border-radius:0"><table><thead><tr><th>เลขที่</th><th>คนไข้</th><th>สาขาให้บริการ</th><th>สาขารับชำระ</th><th>นิติบุคคล</th><th>ยอด</th><th>สถานะ</th><th>aging</th></tr></thead><tbody>${rows.length ? rows.map(row => `<tr class="clickable-row" data-action="open-invoice"><td><strong>${row.invoice}</strong></td><td class="person-cell"><strong>${row.patient}</strong><span>ข้อมูลสมมติ</span></td><td>${badge(row.serviceBranch)}</td><td>${badge(row.payBranch)}${row.serviceBranch !== row.payBranch ? `<br><span class="table-sub" style="color:var(--warning)">ข้ามสาขา</span>` : ""}</td><td>${row.entity}</td><td><strong>${row.amount}</strong></td><td>${status(row.status, row.statusClass)}</td><td>${row.age}</td></tr>`).join("") : `<tr><td colspan="8"><div class="empty-state">ไม่พบบิลใน scope นี้</div></td></tr>`}</tbody></table></div></section>
+        <section class="card card-pad"><div class="card-head"><div><h2>บริบทข้ามสาขาของเอกสาร</h2><p>ฟิลด์ที่อาจไม่ใช่สาขาเดียวกัน</p></div></div><div class="xbranch"><div class="xrow"><span>สาขาที่ให้บริการ</span><strong>${scope === "all" ? "ตามแต่ละบิล" : scopeName}</strong></div><div class="xrow"><span>สาขาที่รับชำระ</span><strong>อาจต่างสาขา (เช่น จ่ายที่ B)</strong></div><div class="xrow"><span>นิติบุคคล / เลขที่เอกสาร</span><strong>ตามโครงสร้างธุรกิจ · ต้องตัดสินใจ</strong></div><div class="xrow"><span>ผู้รับรายได้</span><strong>ตาม policy รายได้</strong></div><div class="xrow"><span>สาขา / เจ้าของ DF</span><strong>ผูกกับ provider ที่ทำหัตถการ</strong></div></div><div class="protected-box"><strong>${icon("lock", 14)} แยก context ให้ตรวจสอบได้</strong><p>สาขาให้บริการ vs สาขารับชำระ vs นิติบุคคลเป็น business decision — ใบเสร็จ ภาษี รายได้ และ DF ต้องอ้างอิงให้ตรงกัน</p></div></section>
+      </div>
+
+      <div class="card page-section"><div class="card-head card-pad" style="padding-bottom:13px"><div><h2>Doctor Fee (DF) review — ${scopeName}</h2><p>อ่านจากชุดข้อมูลเดียวกับการรักษาและการรับชำระ · DF คำนวณตาม policy ที่อนุมัติ ไม่ hardcode สูตรใน UI</p></div><span class="status pending">รอตรวจ ${String(dfPending).padStart(2, "0")} รายการ</span></div><div class="table-wrap" style="border:0;border-radius:0"><table class="df-table"><thead><tr><th>ผู้ให้บริการ</th><th>สาขา</th><th>ฐานบริการ</th><th>ค่าแล็บ / วัสดุ</th><th>ส่วนลด</th><th>DF (ตาม policy)</th><th>rule flag</th><th>สถานะ</th><th></th></tr></thead><tbody>${dfList.length ? dfList.map(row => `<tr><td><strong>${row.provider}</strong></td><td>${badge(branchName(row.branch))}</td><td>${row.base}</td><td>− ${row.lab}</td><td>− ${row.disc}</td><td><strong class="df-total" style="font-size:14px">${row.df}</strong></td><td>${row.flag === "—" ? `<span class="section-kicker">ไม่มี</span>` : `<span class="df-flag">${row.flag}</span>`}</td><td>${status(row.status, row.statusClass)}</td><td>${row.status === "รอตรวจ" ? `<button class="text-btn" data-action="open-approval">ตรวจ</button>` : `<span class="section-kicker">✓</span>`}</td></tr>`).join("") : `<tr><td colspan="9"><div class="empty-state">ไม่พบ DF ใน scope นี้</div></td></tr>`}</tbody></table></div><div class="approval-strip"><div class="insight-icon">${icon("shield", 15)}</div><div style="flex:1"><strong>การแก้ไข DF / void / refund / ส่วนลด ต้องผ่าน approval</strong><div class="ap-ba" style="margin-top:6px"><span>ก่อน</span><span class="ap-old">฿ 30,800</span>${icon("arrow", 13)}<span>หลัง</span><span class="ap-new">฿ 28,800</span></div><span class="section-kicker" style="display:block;margin-top:6px">ทุกการเปลี่ยนต้องระบุเหตุผล ผู้อนุมัติ และบันทึก audit — ไม่ลบรายการเดิม</span></div><button class="secondary-btn small-btn" data-action="open-approval">เปิด approval drawer</button></div></div>
+      <div class="prototype-footer">สูตร DF, ค่าแล็บ/วัสดุ, ส่วนลด, งานค้างข้ามเดือน, refund, invoice numbering และนิติบุคคลยังเป็น business decision ที่ต้องอนุมัติก่อนเป็น production contract</div>`;
+    }
+
+    function renderInbox() {
+      const list = visibleConversations();
+      const selected = list[state.selectedConversation % Math.max(list.length, 1)] || conversations[0];
+      return `${pageHeader("OMNICHANNEL + AI", "Inbox", "รวม LINE OA และ Website Chat เข้ากับ Patient 360, appointment และ branch context", `<button class="secondary-btn" data-action="inbox-filter"><span data-icon="search"></span>กรองงานรอรับช่วง</button><button class="primary-btn" data-action="assign-inbox"><span data-icon="arrow"></span>มอบหมายงาน</button>`)}${contextBanner()}<div class="card inbox-layout"><section class="inbox-list"><div class="inbox-list-head"><strong>บทสนทนาใน scope</strong><select class="filter-select inbox-filter" aria-label="กรอง tag"><option>ทุก tag</option><option>ขอนัดหมาย</option><option>ขอเลื่อนนัด</option><option>ติดตามแผนรักษา</option><option>สอบถามทั่วไป</option></select></div>${list.length ? list.map((conversation, index) => `<button class="inbox-item ${conversation.title === selected.title ? "selected" : ""}" data-conversation-index="${index}"><div class="inbox-item-top"><strong>${conversation.title}</strong><time>${conversation.time}</time></div><p>${conversation.messages[conversation.messages.length - 1].text}</p><div class="inbox-item-meta">${badge(conversation.channel)}${badge(branchName(conversation.branch))}${conversation.state === "รอคนรับช่วง" ? `<span class="status pending">รอรับช่วง</span>` : `<span class="status neutral">${conversation.state}</span>`}</div></button>`).join("") : `<div class="empty-state" style="margin:14px">ไม่มีบทสนทนาใน scope</div>`}</section><section class="conversation"><div class="conversation-head"><div><h2>${selected.title}</h2><p>${selected.patient} · ${selected.channel} · ${branchName(selected.branch)}</p></div>${status(selected.state, selected.state === "รอคนรับช่วง" ? "pending" : "neutral")}</div><div class="safe-banner"><strong>AI ช่วยงานสื่อสารและประสานงานเท่านั้น</strong> · ไม่วินิจฉัย ไม่สั่งยา ไม่ตีความ X-ray · คำถามที่ต้องใช้ clinical judgment ต้องส่งต่อคนจริง</div><div class="chat-body">${selected.messages.map((message, index) => `<div class="chat-bubble ${index === 0 ? "incoming" : "outgoing"}">${message.text}<small>${message.who} · ตัวอย่าง transcript</small></div>`).join("")}<div class="ai-draft"><div class="ai-draft-head"><strong>${selected.state === "AI ร่างคำตอบ" ? "AI draft · รอผู้ตรวจ" : "ข้อความที่อนุมัติแล้ว"}</strong><span class="badge">confidence: ประกอบการตัดสินใจ</span></div><p>${selected.messages[selected.messages.length - 1].text}</p><div class="ai-draft-actions"><button class="secondary-btn small-btn" data-action="edit-draft">แก้ข้อความ</button><button class="primary-btn small-btn" data-action="send-reply">ส่งข้อความ</button><button class="secondary-btn small-btn" data-action="handoff">ส่งต่อคนจริง</button></div></div></div></section><aside class="inbox-context"><div class="inbox-context-head"><strong>บริบทที่เชื่อมแล้ว</strong></div><div class="context-block"><h3>คนไข้</h3><div class="context-line"><span>ชื่อ</span><strong>${selected.patient}</strong></div><div class="context-line"><span>สาขา</span><strong>${branchName(selected.branch)}</strong></div><div class="context-line"><span>สิทธิ์ข้อมูล</span><strong>ตรวจตาม role</strong></div></div><div class="context-block"><h3>งานที่เกี่ยวข้อง</h3><div class="context-line"><span>นัดหมาย</span><strong>${selected.branch === "b" ? "SYN-0003" : "ค้นหาใน scope"}</strong></div><div class="context-line"><span>แผนการรักษา</span><strong>เชื่อมเมื่อได้รับสิทธิ์</strong></div><div class="context-line"><span>Consent</span><strong>ตรวจแล้วก่อนใช้ template</strong></div></div><div class="context-block"><h3>การส่งต่อ</h3><button class="secondary-btn small-btn" style="width:100%" data-action="handoff">${icon("arrow", 14)} ส่งต่อทันตแพทย์ / เจ้าหน้าที่</button></div></aside></div><div class="prototype-footer">ช่องทาง Facebook/Instagram ยังไม่แสดงเป็น production channel จนกว่าจะมี contract ยืนยัน</div>`;
+    }
+
+    function reportMeta(scopeName) {
+      const items = [
+        ["ช่วงเวลา", "เดือนนี้ · ก.ย. 2569"],
+        ["สาขาที่รวม", scopeName],
+        ["ผู้ขอ", "HQ Owner"],
+        ["generate", "17 ก.ย. 2569 · 09:41"],
+        ["source", "appointments · payments · labs (demo)"],
+        ["ระดับข้อมูล", "mask ตาม role"]
+      ];
+      return `<div class="rmeta">${items.map(i => `<span class="rmeta-item">${i[0]} <b>${i[1]}</b></span>`).join("")}</div>`;
+    }
+    function metricMini(label, value, ic, note, pending) {
+      return `<article class="metric-card"><div class="metric-top"><span>${label}</span><span class="metric-icon">${icon(ic, 16)}</span></div><div class="metric-value">${value}</div><div class="section-kicker">${pending ? `<span class="pending-def">${icon("shield", 11)}รอนิยาม</span> ` : ""}${note}</div></article>`;
+    }
+    function hbar(label, colorVar, val, max, valText, active) {
+      const w = Math.max(3, val / max * 100);
+      return `<div class="hbar-row"><span class="hbar-lbl"><i style="background:${colorVar}"></i>${label}${active ? " ✓" : ""}</span><div class="hbar-track"><i style="width:${w.toFixed(0)}%;background:${colorVar}"></i></div><b>${valText}</b></div>`;
+    }
+
+    function reportOps(scope, scopeName) {
+      const o = BRANCHOPS[scope] || BRANCHOPS.all;
+      const ns = [["สาขา A", 3.1, "a"], ["สาขา B", 5.6, "b"], ["สาขา C", 8.9, "c"]];
+      const maxNs = Math.max(...ns.map(x => x[1]));
+      const nsColor = v => v > 6 ? "var(--danger)" : v > 4 ? "var(--warning)" : "var(--brand)";
+      return `<div class="metric-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        ${metricMini("นัดทั้งหมด", o.appts, "calendar", "ในช่วงที่เลือก")}
+        ${metricMini("no-show", o.noShow, "patients", "เทียบเป้าต้องอนุมัติก่อน", true)}
+        ${metricMini("ยกเลิก", o.cancel, "close", "ตามช่องทางที่เปิดใช้")}
+        ${metricMini("resource utilization", "—", "refresh", "ต้องกำหนดวิธีวัดก่อน", true)}
+      </div>
+      <div class="grid-2">
+        <section class="card card-pad"><div class="card-head"><div><h2>no-show รายสาขา</h2><p>ใช้เปรียบเทียบเพื่อคุยกับผู้จัดการสาขา</p></div><span class="badge">source: appointments</span></div>${ns.map(x => hbar(x[0], nsColor(x[1]), x[1], maxNs, x[1].toFixed(1) + "%", x[2] === scope)).join("")}<div class="section-kicker" style="margin-top:8px">no-show เป็นสัดส่วนของนัดในช่วง · ยังไม่ใช่ SLO จนกว่าจะอนุมัติเป้าหมาย</div></section>
+        <section class="card card-pad"><div class="card-head"><div><h2>สิ่งที่ควรลงมือทำ</h2><p>insight ต้องมีเหตุผลและ owner</p></div><span class="status info">3 actions</span></div><div class="task-list"><div class="task-item"><span class="task-marker danger"></span><div class="task-copy"><strong>no-show สาขา C สูงกว่าค่าเฉลี่ย</strong><span>ตรวจการยืนยันนัดและช่องทางเตือนนัด</span></div><span class="task-owner">ผู้จัดการสาขา</span></div><div class="task-item"><span class="task-marker"></span><div class="task-copy"><strong>ช่องว่างตารางช่วงบ่าย</strong><span>เปิด schedule เพื่อเติมคิว walk-in / recall</span></div><span class="task-owner">เคาน์เตอร์</span></div><div class="task-item"><span class="task-marker info"></span><div class="task-copy"><strong>ตั้งนิยาม resource utilization</strong><span>ต้องอนุมัติวิธีวัดก่อนแสดงเป็น KPI</span></div><span class="task-owner">Product</span></div></div></section>
+      </div>
+      <div class="card page-section"><div class="card-head card-pad" style="padding-bottom:13px"><div><h2>เปรียบเทียบ Operations รายสาขา</h2><p>คลิกสาขาเพื่อเจาะดูโดยคง filter เดิม</p></div><span class="badge">คลิกเพื่อ drill-down</span></div><div class="table-wrap" style="border:0;border-radius:0"><table><thead><tr><th>สาขา</th><th>นัด</th><th>no-show</th><th>ยกเลิก</th><th>recall</th><th>lab risk</th><th></th></tr></thead><tbody>${["a", "b", "c"].map(k => { const b = BRANCHOPS[k]; return `<tr><td><strong>${branchName(k)}</strong>${k === scope ? ` ${badge("scope ปัจจุบัน")}` : ""}</td><td>${b.appts}</td><td>${b.noShow}</td><td>${b.cancel}</td><td>${b.recall}</td><td>${b.lab ? status(b.lab + " เสี่ยง", "risk") : status("ปกติ", "confirmed")}</td><td><button class="text-btn" data-branch="${k}">ดูสาขา</button></td></tr>`; }).join("")}</tbody></table></div></div>`;
+    }
+
+    function reportPatient(scope, scopeName) {
+      const o = BRANCHOPS[scope] || BRANCHOPS.all;
+      return `<div class="metric-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        ${metricMini("อัตรากลับมาใช้บริการ", o.returnRate, "patients", "นิยาม return ต้องอนุมัติ", true)}
+        ${metricMini("recall ถึงกำหนด", o.recall, "refresh", "ยังไม่ได้นัด")}
+        ${metricMini("แผนที่ต้องติดตาม", o.plans, "tooth", "กำลังรักษา / รอตอบรับ")}
+        ${metricMini("consent ครบถ้วน", o.consent, "shield", "ตามวัตถุประสงค์ที่ใช้งาน")}
+      </div>
+      <div class="grid-2">
+        <section class="card card-pad"><div class="card-head"><div><h2>งานติดตามคนไข้</h2><p>ทุกงานสร้างผ่าน approved template · ตรวจ consent ก่อนส่ง</p></div><span class="status info">${o.recall + 2} รายการ</span></div><div class="task-list"><div class="task-item"><span class="task-marker danger"></span><div class="task-copy"><strong>เคสจัดฟันเลยรอบ recall</strong><span>เปิดงานติดตาม ไม่เลื่อนนัดหรือให้คำแนะนำทางคลินิกอัตโนมัติ</span></div><span class="task-owner">ผู้ช่วย</span></div><div class="task-item"><span class="task-marker"></span><div class="task-copy"><strong>แผนที่เสนอแล้วใกล้หมดอายุ</strong><span>ติดตามอายุข้อเสนอและผู้รับผิดชอบ</span></div><span class="task-owner">เคาน์เตอร์</span></div><div class="task-item"><span class="task-marker info"></span><div class="task-copy"><strong>consent ยังไม่ครบเพื่อรับข่าวสาร</strong><span>ขอ consent เพิ่มก่อนส่งโปรโมชัน</span></div><span class="task-owner">เคาน์เตอร์</span></div></div></section>
+        <section class="card card-pad"><div class="card-head"><div><h2>สถานะ consent</h2><p>แยกตามวัตถุประสงค์ · แสดงตามสิทธิ์</p></div><span class="badge">${o.consent} ครบ</span></div><div class="xbranch"><div class="xrow"><span>การรักษา / นัดหมาย</span><strong style="color:var(--brand-deep)">ครบตาม role</strong></div><div class="xrow"><span>เรียกเก็บเงิน</span><strong style="color:var(--brand-deep)">ครบ</strong></div><div class="xrow"><span>ข่าวสาร / โปรโมชัน</span><strong style="color:var(--warning)">รอ consent เพิ่ม</strong></div></div><div class="protected-box"><strong>${icon("lock", 14)} ข้อมูลติดตามถูก mask</strong><p>รายชื่อและช่องทางติดต่อแสดงตามสิทธิ์ผู้ใช้ · การส่งข้อความต้องผ่าน consent และ template ที่อนุมัติ</p></div></section>
+      </div>`;
+    }
+
+    function reportLab(scope, scopeName) {
+      const o = BRANCHOPS[scope] || BRANCHOPS.all;
+      const riskLabs = labs.filter(l => (scope === "all" || l.branch === scope) && l.risk);
+      const funnel = [["ร่าง", 46, ""], ["เสนอแล้ว", 68, "alt"], ["ตอบรับแล้ว", 38, "alt"], ["กำลังรักษา", 100, ""], ["เสร็จสิ้น", 56, "warn"]];
+      const funnelVals = [18, 27, 15, 39, 22];
+      return `<div class="metric-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        ${metricMini("งานแล็บเสี่ยง", String(o.lab).padStart(2, "0"), "lab", "นัดใส่ใน 3 วัน")}
+        ${metricMini("งานแก้ (revision)", String(o.revision).padStart(2, "0"), "refresh", "เก็บ history เดิม")}
+        ${metricMini("turnaround เฉลี่ย", "—", "calendar", "ต้องนิยาม start/end ก่อน", true)}
+        ${metricMini("แผนกำลังรักษา", o.plans, "tooth", "ใน scope ปัจจุบัน")}
+      </div>
+      <div class="grid-2">
+        <section class="card card-pad"><div class="card-head"><div><h2>Treatment plan ตามขั้น</h2><p>ดูคอขวดจาก “เสนอ” ไป “เริ่มรักษา”</p></div><button class="action-link" data-view="treatment">เปิด</button></div><div class="exec-funnel">${funnel.map((f, i) => `<div class="exec-funnel-row"><span>${f[0]}</span><div class="exec-funnel-track"><i class="${f[2]}" style="width:${f[1]}%"></i></div><strong>${funnelVals[i]}</strong></div>`).join("")}</div></section>
+        <section class="card card-pad"><div class="card-head"><div><h2>งานแล็บที่ต้องดู</h2><p>risk flag ต้องบอกเหตุผลและ owner</p></div><span class="status risk">${riskLabs.length} เสี่ยง</span></div>${riskLabs.length ? `<div class="table-wrap" style="border:0"><table><thead><tr><th>ชิ้นงาน</th><th>สาขา</th><th>กำหนดรับ</th><th>วันนัดใส่</th><th>เหตุผล</th></tr></thead><tbody>${riskLabs.map(l => `<tr class="clickable-row" data-lab="${l.id}"><td><strong>${l.title}</strong></td><td>${badge(branchName(l.branch))}</td><td>${l.due}</td><td>${l.fitting}</td><td><span class="df-flag">${l.risk}</span></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state"><strong>ไม่พบงานเสี่ยงใน scope นี้</strong><p>ระบบคำนวณ risk ใหม่เมื่อเปลี่ยนวันนัดหรือสาขาปลายทาง</p></div>`}</section>
+      </div>`;
+    }
+
+    function reportFinance(scope, scopeName) {
+      const F = FIN[scope] || FIN.all;
+      const dfPending = dfRows.filter(r => (scope === "all" || r.branch === scope) && r.status === "รอตรวจ").length;
+      return `<div class="finance-grid">
+        <div class="finance-metric"><span>รายรับ</span><strong>${F.revStr}</strong><div class="section-kicker"><span class="fin-delta up">+8.4%</span> เทียบเดือนก่อน</div></div>
+        <div class="finance-metric"><span>รับชำระ</span><strong>${F.colStr}</strong><div class="section-kicker">อัตราเก็บเงิน <strong style="color:var(--brand-deep)">${F.rate}</strong></div></div>
+        <div class="finance-metric"><span>ยอดค้าง</span><strong>${F.outStr}</strong><div class="section-kicker">เกิน 30 วัน ฿ ${F.aging.o30.toFixed(1)}k</div></div>
+        <div class="finance-metric"><span>DF รอตรวจ</span><strong>${String(dfPending).padStart(2, "0")} รายการ</strong><div class="section-kicker">ดูรายละเอียดที่หน้าการเงิน</div></div>
+      </div>
+      <div class="grid-2">
+        <section class="card card-pad exec-card"><div class="exec-card-head"><div><h2>รายรับ · รับชำระ · ยอดค้าง</h2><p>${scopeName} · 6 เดือนล่าสุด</p></div><span class="badge">ล้านบาท</span></div><div class="zlegend"><span><i style="background:var(--c-collect)"></i>รับชำระ</span><span><i style="background:var(--c-out)"></i>ยอดค้างในงวด</span></div>${stackedChart("rep", F.rev, F.col)}</section>
+        <section class="card card-pad"><div class="card-head"><div><h2>Aging</h2><p>ตามสิทธิ์ Finance · ${scopeName}</p></div><span class="badge">4 buckets</span></div><div style="font-size:22px;font-weight:900;letter-spacing:-.03em">${F.outStr}</div>${agingBar(F.aging)}<div class="modal-actions" style="justify-content:flex-start;margin-top:6px"><button class="primary-btn small-btn" data-view="finance">เปิดหน้าการเงิน / DF</button></div></section>
+      </div>`;
+    }
+
+    function renderReports() {
+      const scope = state.branch;
+      const scopeName = currentBranch().label;
+      const tab = state.reportTab || "ops";
+      const tabs = [["ops", "Operations"], ["patient", "Patient follow-up"], ["lab", "Lab & treatment"], ["finance", "Finance"]];
+      const tabsHtml = `<div class="rtabs" role="tablist">${tabs.map(t => `<button class="rtab ${t[0] === tab ? "active" : ""}" data-report-tab="${t[0]}" role="tab" aria-selected="${t[0] === tab}">${t[1]}</button>`).join("")}</div>`;
+      const body = tab === "ops" ? reportOps(scope, scopeName) : tab === "patient" ? reportPatient(scope, scopeName) : tab === "lab" ? reportLab(scope, scopeName) : reportFinance(scope, scopeName);
+      return `${pageHeader("INSIGHTS", "รายงานและ Insights", "แยกเป็น 4 มุมมองไม่ปะปนกัน · ทุก report ระบุช่วงเวลา สาขา ผู้ขอ เวลา generate และ source", `<button class="secondary-btn" data-action="export-blocked"><span data-icon="shield"></span>Export ตามสิทธิ์</button><button class="primary-btn" data-action="report-schedule"><span data-icon="calendar"></span>ตั้งเวลารายงาน</button>`)}${contextBanner()}${reportMeta(scopeName)}${tabsHtml}${body}<div class="prototype-footer">Export ต้องมี watermark ของ scope และ timestamp · metric ที่ยังไม่มีนิยามแสดงป้าย “รอนิยาม” ไม่นำเสนอเป็น KPI ทางธุรกิจ · ข้อมูลทั้งหมดเป็น synthetic demo</div>`;
+    }
+
+    function renderSettings() {
+      return `${pageHeader("ORGANIZATION + ACCESS", "ตั้งค่าองค์กร", "จัดการสาขา, resource, user scope, catalog policy และ audit โดยไม่ลบประวัติธุรกรรมเดิม", `<button class="secondary-btn" data-action="open-audit"><span data-icon="shield"></span>ดู audit log</button><button class="primary-btn" data-action="add-branch"><span data-icon="plus"></span>เพิ่มสาขา</button>`)}${contextBanner()}<div class="settings-grid"><section class="card card-pad"><div class="card-head"><div><h2>สาขาและทรัพยากร</h2><p>ที่อยู่, เวลา, วันหยุด, เก้าอี้, บุคลากร และสถานะรับนัด</p></div><span class="badge">3 branches</span></div><div class="branch-settings"><div class="branch-setting"><span class="branch-swatch"></span><div class="branch-setting-main"><strong>สาขา A <span class="status confirmed" style="margin-left:6px">เปิดรับนัด</span></strong><p>ที่อยู่ตัวอย่าง · เวลาทำการตาม policy · 4 เก้าอี้</p><div class="setting-meta">${badge("ผู้ให้บริการ 6 คน")}${badge("ผู้ช่วย 4 คน")}${badge("LINE OA")}</div></div><button class="text-btn" data-action="edit-branch">แก้ไข</button></div><div class="branch-setting"><span class="branch-swatch" style="background:var(--info)"></span><div class="branch-setting-main"><strong>สาขา B <span class="status confirmed" style="margin-left:6px">เปิดรับนัด</span></strong><p>ที่อยู่ตัวอย่าง · เวลาทำการตาม policy · 3 เก้าอี้</p><div class="setting-meta">${badge("ผู้ให้บริการ 4 คน")}${badge("ผู้ช่วย 3 คน")}${badge("Website Chat")}</div></div><button class="text-btn" data-action="edit-branch">แก้ไข</button></div><div class="branch-setting"><span class="branch-swatch" style="background:var(--warning)"></span><div class="branch-setting-main"><strong>สาขา C <span class="status confirmed" style="margin-left:6px">เปิดรับนัด</span></strong><p>ที่อยู่ตัวอย่าง · เวลาทำการตาม policy · 2 เก้าอี้</p><div class="setting-meta">${badge("ผู้ให้บริการ 3 คน")}${badge("ผู้ช่วย 2 คน")}${badge("LINE OA")}</div></div><button class="text-btn" data-action="edit-branch">แก้ไข</button></div></div><div class="protected-box"><strong>${icon("lock", 14)} Soft close</strong><p>ปิดสาขา = หยุดรับนัดใหม่ตาม policy แต่ไม่ลบ appointment, encounter, lab, invoice หรือ audit history</p></div></section><section class="card card-pad"><div class="card-head"><div><h2>Policy ที่ต้องอนุมัติ</h2><p>badge นี้ทำให้ gap มองเห็นก่อน build contract</p></div><span class="status pending">ต้องตัดสินใจ</span></div><div class="policy-list"><div class="policy-row"><div class="policy-icon">${icon("patients", 14)}</div><div><strong>สิทธิ์ clinical ข้ามสาขา</strong><span>role, assignment และ consent</span></div></div><div class="policy-row"><div class="policy-icon">${icon("finance", 14)}</div><div><strong>สูตร DF และการแก้ย้อนหลัง</strong><span>ค่าแล็บ, ส่วนลด, package, งานค้าง</span></div></div><div class="policy-row"><div class="policy-icon">${icon("lab", 14)}</div><div><strong>lab risk mode</strong><span>warning หรือ require approval</span></div></div><div class="policy-row"><div class="policy-icon">${icon("calendar", 14)}</div><div><strong>โอนนัด / โอนเคส</strong><span>สาขา, provider, chair, DF และ audit</span></div></div><div class="policy-row"><div class="policy-icon">${icon("inbox", 14)}</div><div><strong>AI knowledge / template ต่อสาขา</strong><span>approved message และ escalation</span></div></div></div><div class="modal-actions" style="justify-content:flex-start"><button class="secondary-btn small-btn" data-action="open-policy">เปิด policy center</button></div></section></div><div class="card page-section access-table"><div class="card-head card-pad" style="padding-bottom:0"><div><h2>Users / roles / branch scope</h2><p>แสดง effective time และ audit เมื่อมีการเปลี่ยนสิทธิ์</p></div><button class="action-link" data-action="access-review">ทบทวน access</button></div><div class="table-wrap" style="border:0;border-radius:0"><table><thead><tr><th>ผู้ใช้</th><th>Role</th><th>สาขาที่เข้าถึง</th><th>Clinical</th><th>Finance</th><th>Export</th><th>สถานะ</th></tr></thead><tbody><tr><td class="person-cell"><strong>ผู้ใช้สมมติ 01</strong><span>effective 01 ก.ย. 2569</span></td><td>Counter</td><td>${badge("A")}${badge("B")}</td><td><span class="permission-pill">● จำเป็นต่อการทำงาน</span></td><td><span class="permission-pill">● รับชำระ</span></td><td><span class="permission-pill restricted">— จำกัด</span></td><td>${status("Active", "confirmed")}</td></tr><tr><td class="person-cell"><strong>ผู้ใช้สมมติ 02</strong><span>effective 10 ก.ย. 2569</span></td><td>Dentist</td><td>${badge("B")}</td><td><span class="permission-pill">● เคสที่มอบหมาย</span></td><td><span class="permission-pill restricted">— ไม่ได้</span></td><td><span class="permission-pill restricted">— ไม่ได้</span></td><td>${status("Active", "confirmed")}</td></tr><tr><td class="person-cell"><strong>ผู้ใช้สมมติ 03</strong><span>effective 02 ส.ค. 2569</span></td><td>Finance</td><td>${badge("A")}${badge("B")}${badge("C")}</td><td><span class="permission-pill restricted">— ไม่ได้</span></td><td><span class="permission-pill">● ตาม scope</span></td><td><span class="permission-pill">● ตาม policy</span></td><td>${status("Review", "pending")}</td></tr></tbody></table></div></div><div class="prototype-footer">server-side tenant/branch isolation, role enforcement และ audit log ต้องมีจริงก่อนใช้ production</div>`;
+    }
+
+    function renderView() {
+      const views = { dashboard: renderDashboard, schedule: renderSchedule, queue: renderQueue, patients: renderPatients, treatment: renderTreatment, labs: renderLabs, finance: renderFinance, inbox: renderInbox, reports: renderReports, settings: renderSettings };
+      const renderer = views[state.view] || renderDashboard;
+      document.getElementById("appContent").innerHTML = renderer();
+      document.querySelectorAll(".nav-item").forEach(button => button.classList.toggle("active", button.dataset.view === state.view || (state.view === "queue" && button.dataset.view === "schedule")));
+      hydrateIcons(document.getElementById("appContent"));
+      bindDynamicActions();
+      bindCharts(document.getElementById("appContent"));
+    }
+
+    function renderBranchMenu() {
+      const menu = document.getElementById("branchMenu");
+      menu.innerHTML = branches.map(branch => `<button class="branch-option ${branch.key === state.branch ? "selected" : ""}" data-select-branch="${branch.key}" role="option" aria-selected="${branch.key === state.branch}"><span class="branch-dot" style="background:${branch.color}"></span><span class="option-copy"><strong>${branch.label}</strong><small>${branch.sub}</small></span>${branch.key === state.branch ? `<span class="check">✓</span>` : ""}</button>`).join("");
+      menu.querySelectorAll("[data-select-branch]").forEach(button => button.addEventListener("click", () => {
+        state.branch = button.dataset.selectBranch;
+        state.selectedPatient = 0;
+        state.selectedConversation = 0;
+        closeBranchMenu();
+        updateBranchTrigger();
+        renderView();
+        toast(`เปลี่ยนมุมมองเป็น ${currentBranch().label}`);
+      }));
+    }
+
+    function updateBranchTrigger() {
+      const branch = currentBranch();
+      document.getElementById("branchLabel").textContent = branch.label;
+      document.getElementById("branchSub").textContent = branch.sub;
+      document.querySelector("#branchTrigger .branch-dot").style.background = branch.color;
+      renderBranchMenu();
+    }
+
+    function closeBranchMenu() {
+      const trigger = document.getElementById("branchTrigger");
+      const menu = document.getElementById("branchMenu");
+      menu.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+    }
+
+    function openModal(content) {
+      const root = document.getElementById("modalRoot");
+      root.innerHTML = `<div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">${content}</div>`;
+      root.hidden = false;
+      state.modalOpen = true;
+      hydrateIcons(root);
+      root.querySelector("[data-close-modal]")?.focus();
+    }
+
+    function closeModal() {
+      const root = document.getElementById("modalRoot");
+      root.hidden = true;
+      root.innerHTML = "";
+      state.modalOpen = false;
+    }
+
+    function appointmentModal(id) {
+      const appt = appointments.find(item => item.id === id) || appointments[0];
+      openModal(`<div class="modal-head"><div><h2 id="modalTitle">นัดหมาย ${appt.id}</h2><p>${appt.time} · ${appt.duration} · ${branchName(appt.branch)}</p></div><button class="icon-btn" data-close-modal aria-label="ปิด"><span data-icon="close"></span></button></div><div class="modal-body"><div class="detail-grid"><div class="detail-item"><span>คนไข้</span><strong>${appt.patient}<br><small style="color:var(--muted);font-weight:500">${appt.hn}</small></strong></div><div class="detail-item"><span>สถานะ</span><strong>${status(appt.status, appt.statusClass)}</strong></div><div class="detail-item"><span>หัตถการ</span><strong>${appt.procedure}</strong></div><div class="detail-item"><span>สาขา</span><strong>${branchName(appt.branch)}</strong></div><div class="detail-item"><span>เก้าอี้</span><strong>${appt.chair}</strong></div><div class="detail-item"><span>ทันตแพทย์</span><strong>${appt.provider}</strong></div><div class="detail-item"><span>ช่องทาง</span><strong>${appt.source}</strong></div><div class="detail-item"><span>Consent</span><strong>ตรวจตาม role</strong></div></div><div class="modal-note">การยืนยันจริงต้องตรวจและล็อกเก้าอี้ + ทันตแพทย์ที่ server หาก slot ถูกใช้ไปแล้วต้องแสดง conflict และเสนอเวลาทางเลือก</div><div class="modal-actions"><button class="secondary-btn" data-action="reschedule">เลื่อนนัด</button><button class="secondary-btn" data-action="cancel-appointment">ยกเลิก</button><button class="primary-btn" data-action="check-in">เช็กอิน</button></div></div>`);
+    }
+
+    function labModal(id) {
+      const lab = labs.find(item => item.id === id) || labs[0];
+      openModal(`<div class="modal-head"><div><h2 id="modalTitle">${lab.title}</h2><p>${lab.id} · ${branchName(lab.branch)} · ${lab.lab}</p></div><button class="icon-btn" data-close-modal aria-label="ปิด"><span data-icon="close"></span></button></div><div class="modal-body"><div class="detail-grid"><div class="detail-item"><span>สถานะ</span><strong>${lab.stage === "sent" ? "ส่งแล็บแล้ว" : lab.stage === "production" ? "กำลังผลิต" : lab.stage === "shipping" ? "กำลังส่งกลับ" : lab.stage === "clinic" ? "ถึงคลินิกแล้ว" : "ใส่เสร็จ"}</strong></div><div class="detail-item"><span>ประเภทงาน</span><strong>${lab.type}</strong></div><div class="detail-item"><span>สาขาต้นทาง → ปลายทาง</span><strong>${branchName(lab.branch)} → ${branchName(lab.branch)}</strong></div><div class="detail-item"><span>กำหนดรับ</span><strong>${lab.due}</strong></div><div class="detail-item"><span>วันนัดใส่</span><strong>${lab.fitting}</strong></div><div class="detail-item"><span>revision</span><strong>ครั้งที่ 1 · ดู history</strong></div></div>${lab.risk ? `<div class="modal-note" style="border-color:#eec8c4;background:var(--danger-soft);color:var(--danger)"><strong>Risk flag:</strong> ${lab.risk}. ต้องแจ้ง owner และคำนวณใหม่เมื่อมีการเปลี่ยนวัน/สาขา</div>` : `<div class="protected-box">${icon("shield", 14)} ยังไม่พบ risk flag จากข้อมูลตัวอย่าง</div>`}<div class="modal-actions"><button class="secondary-btn" data-action="lab-contact">ติดต่อผู้รับผิดชอบ</button><button class="secondary-btn" data-action="lab-revision">สร้าง revision</button><button class="primary-btn" data-action="lab-approval">เปิด approval</button></div></div>`);
+    }
+
+    function patientModal() {
+      const patient = patients[state.selectedPatient % patients.length] || patients[0];
+      openModal(`<div class="modal-head"><div><h2 id="modalTitle">${patient.name}</h2><p>Patient 360 · ${patient.id} · ${branchName(patient.branch)}</p></div><button class="icon-btn" data-close-modal aria-label="ปิด"><span data-icon="close"></span></button></div><div class="modal-body"><div class="detail-grid"><div class="detail-item"><span>Master record</span><strong>ภายใน tenant เดียว</strong></div><div class="detail-item"><span>สาขาที่เกี่ยวข้อง</span><strong>A · B · ตามสิทธิ์</strong></div><div class="detail-item"><span>นัดถัดไป</span><strong>${patient.next}</strong></div><div class="detail-item"><span>แผน</span><strong>${patient.plan}</strong></div><div class="detail-item"><span>Family / Guardian</span><strong>เชื่อมแล้ว · ตรวจตาม role</strong></div><div class="detail-item"><span>Consent</span><strong>${patient.consent}</strong></div></div><div class="protected-box"><strong>${icon("lock", 14)} Clinical tabs protected</strong><p>ข้อมูลโรคประจำตัว, ยาประจำ, แพ้ยา/สาร, odontogram และ X-ray ต้องผ่าน role/assignment/consent gate</p></div><div class="modal-actions"><button class="secondary-btn" data-action="request-consent">ขอ consent เพิ่ม</button><button class="primary-btn" data-close-modal>กลับไป Patient 360</button></div></div>`);
+    }
+
+    function bindDynamicActions() {
+      document.querySelectorAll("[data-view]").forEach(element => element.addEventListener("click", event => {
+        event.stopPropagation();
+        const view = element.dataset.view;
+        if (!view) return;
+        state.view = view;
+        document.body.classList.remove("nav-open");
+        renderView();
+      }));
+      document.querySelectorAll("[data-branch]").forEach(element => element.addEventListener("click", event => {
+        event.stopPropagation();
+        state.branch = element.dataset.branch;
+        updateBranchTrigger();
+        renderView();
+        toast(`เปิดมุมมอง ${currentBranch().label}`);
+      }));
+      document.querySelectorAll("[data-appointment]").forEach(element => element.addEventListener("click", event => {
+        event.stopPropagation();
+        appointmentModal(element.dataset.appointment);
+      }));
+      document.querySelectorAll("[data-lab]").forEach(element => element.addEventListener("click", event => {
+        event.stopPropagation();
+        labModal(element.dataset.lab);
+      }));
+      document.querySelectorAll("[data-patient-index]").forEach(element => element.addEventListener("click", event => {
+        event.stopPropagation();
+        state.selectedPatient = Number(element.dataset.patientIndex);
+        renderView();
+      }));
+      document.querySelectorAll("[data-conversation-index]").forEach(element => element.addEventListener("click", event => {
+        event.stopPropagation();
+        state.selectedConversation = Number(element.dataset.conversationIndex);
+        renderView();
+      }));
+      document.querySelectorAll("[data-report-tab]").forEach(element => element.addEventListener("click", event => {
+        event.stopPropagation();
+        state.reportTab = element.dataset.reportTab;
+        renderView();
+      }));
+      document.querySelectorAll("[data-action]").forEach(element => element.addEventListener("click", event => {
+        event.stopPropagation();
+        handleAction(element.dataset.action, element.dataset.label);
+      }));
+      hydrateIcons(document);
+    }
+
+    function handleAction(action, label = "") {
+      const actionMap = {
+        "create-appointment": () => openModal(`<div class="modal-head"><div><h2 id="modalTitle">สร้างนัดหมาย</h2><p>เลือก branch ก่อนยืนยัน slot ที่ server</p></div><button class="icon-btn" data-close-modal aria-label="ปิด"><span data-icon="close"></span></button></div><div class="modal-body"><div class="detail-grid"><div class="detail-item"><span>สาขา</span><strong>${state.branch === "all" ? "ต้องเลือกสาขา" : currentBranch().label}</strong></div><div class="detail-item"><span>ผู้รับบริการ</span><strong>ค้นหา HN / ยืนยันตัวตน</strong></div><div class="detail-item"><span>หัตถการ</span><strong>เลือกจาก catalog ที่อนุมัติ</strong></div><div class="detail-item"><span>resource</span><strong>เก้าอี้ + ทันตแพทย์</strong></div></div><div class="modal-note">ถ้าอยู่ใน “ทุกสาขา” ระบบจะไม่เดาสาขาแทน ต้องเลือก target branch ก่อนสร้างหรือส่งต่อเคาน์เตอร์</div><div class="modal-actions"><button class="secondary-btn" data-close-modal>ยกเลิก</button><button class="primary-btn" data-action="confirm-slot">ตรวจ slot จริง</button></div></div>`),
+        "view-reports": () => { state.view = "reports"; renderView(); },
+        "open-tasks": () => { state.view = "labs"; renderView(); },
+        "metric": () => toast(`เปิดรายการ: ${label || "metric"} · prototype action`),
+        "open-queue": () => { state.view = "queue"; renderView(); },
+        "walk-in": () => toast("Prototype: เพิ่ม walk-in ต้องยืนยัน branch และ identity ก่อน"),
+        "queue-call": () => toast("เรียกคิวแล้ว · ต้องมี server response ในระบบจริง"),
+        "queue-skip": () => toast("ข้ามคิวแล้ว · เหตุผลจะถูกบันทึกใน audit"),
+        "queue-recall": () => toast("เรียกซ้ำแล้ว · ตัวจับเวลารอคงอยู่"),
+        "queue-open": () => patientModal(),
+        "new-patient": () => toast("Prototype: เปิด registration พร้อม duplicate review"),
+        "duplicate-review": () => toast("Prototype: duplicate review ต้องไม่ลบหลักฐานเดิม"),
+        "open-patient-detail": () => patientModal(),
+        "request-consent": () => toast("ส่งคำขอ consent แล้ว · ยังไม่เปิด clinical data อัตโนมัติ"),
+        "new-plan": () => toast("Prototype: สร้าง Treatment Plan พร้อม status ร่าง"),
+        "open-odontogram": () => openModal(`<div class="modal-head"><div><h2 id="modalTitle">Odontogram · 32 ซี่ FDI</h2><p>ตัวอย่าง UI · ข้อมูล clinical ต้องถูก gate ตาม role</p></div><button class="icon-btn" data-close-modal aria-label="ปิด"><span data-icon="close"></span></button></div><div class="modal-body"><div class="empty-state"><strong>Clinical canvas ถูกป้องกันใน prototype</strong><p>ในระบบจริงจะแสดงสถานะ เคยรักษา / อยู่ในแผน / ไม่มีฟัน หลังผ่าน role และ consent policy</p><button class="primary-btn" data-action="request-consent">ขอสิทธิ์ดูข้อมูล</button></div></div>`),
+        "open-plan": () => toast("เปิด Treatment Plan detail · accepted ≠ started"),
+        "lab-policy": () => toast("Risk policy: warning / require approval / ยังไม่ตั้งค่า"),
+        "new-lab": () => toast("Prototype: สร้าง Lab Order พร้อมสาขาต้นทางและปลายทาง"),
+        "lab-risk-filter": () => toast("กรองเฉพาะงานแล็บเสี่ยงแล้ว · prototype"),
+        "lab-three-days": () => toast("แสดงงานที่มีนัดใส่ใน 3 วัน · ตรวจ due date ก่อน"),
+        "open-lab-list": () => toast("เปิดรายการงานแล็บทั้งหมดใน scope"),
+        "lab-contact": () => toast("ส่งงานให้ผู้รับผิดชอบ · ต้องมี audit event"),
+        "lab-revision": () => toast("สร้าง revision ใหม่โดยคง history เดิม"),
+        "lab-approval": () => toast("เปิด approval drawer · policy ยังรอการอนุมัติ"),
+        "new-payment": () => toast("Prototype: รับชำระต้องระบุสาขาให้บริการ/รับชำระ"),
+        "export-blocked": () => toast("Export ต้องตรวจสิทธิ์, branch scope และ retention ก่อน"),
+        "open-approval": () => openModal(`<div class="modal-head"><div><h2 id="modalTitle">Approval drawer</h2><p>แก้บิล / DF ต้องมีเหตุผลและ audit trail</p></div><button class="icon-btn" data-close-modal aria-label="ปิด"><span data-icon="close"></span></button></div><div class="modal-body"><div class="detail-grid"><div class="detail-item"><span>ก่อนแก้</span><strong>ข้อมูลตามรายการเดิม</strong></div><div class="detail-item"><span>หลังแก้</span><strong>รอผู้อนุมัติกรอก</strong></div><div class="detail-item"><span>ผู้ร้องขอ</span><strong>ผู้ใช้สมมติ · Finance</strong></div><div class="detail-item"><span>สิ่งที่ได้รับผลกระทบ</span><strong>Invoice · Receipt · DF</strong></div></div><div class="modal-note">ห้ามลบรายการเดิมเพื่อแก้ยอดย้อนหลัง ต้องเพิ่ม adjustment event พร้อม reason และ approver</div><div class="modal-actions"><button class="secondary-btn" data-close-modal>ยกเลิก</button><button class="primary-btn" data-action="submit-approval">ส่งขออนุมัติ</button></div></div>`),
+        "open-df-policy": () => toast("DF policy: ฐานคำนวณและ rule ต้องมาจากข้อตกลงที่อนุมัติ"),
+        "open-invoice": () => toast("เปิด invoice detail พร้อม service/pay branch context"),
+        "inbox-filter": () => toast("กรองบทสนทนา: รอคนรับช่วง"),
+        "assign-inbox": () => toast("มอบหมายงานพร้อมคง transcript + branch context"),
+        "edit-draft": () => toast("แก้ draft ได้ · AI confidence ไม่ใช่สิทธิ์ตอบ clinical"),
+        "send-reply": () => toast("ส่งข้อความจาก approved source แล้ว · prototype"),
+        "handoff": () => toast("ส่งต่อคนจริงแล้ว · transcript และ context ถูกคงไว้"),
+        "report-schedule": () => toast("ตั้งเวลารายงานตาม scope และ permission"),
+        "add-branch": () => toast("Prototype: เพิ่มสาขาพร้อม entitlement check"),
+        "edit-branch": () => toast("แก้สาขาต้องสร้าง audit event และไม่ลบธุรกรรมเดิม"),
+        "open-audit": () => toast("เปิด audit log: actor, role, branch, object, action, time"),
+        "open-policy": () => toast("เปิด policy center · มี open decisions แสดงเป็น badge"),
+        "access-review": () => toast("ทบทวน session / role / branch membership"),
+        "confirm-slot": () => toast("ต้องเลือก branch และเช็ก slot จริงจาก server ก่อนยืนยัน"),
+        "reschedule": () => toast("เลื่อนนัดต้องตรวจ resource impact และบันทึกเหตุผล"),
+        "cancel-appointment": () => toast("ยกเลิกนัดต้องใช้ policy no-show / deposit / refund"),
+        "check-in": () => toast("เช็กอินต้องยืนยัน branch + appointment ก่อนสร้าง encounter"),
+        "submit-approval": () => { closeModal(); toast("ส่ง approval แล้ว · audit event ถูกสร้างใน prototype"); }
+      };
+      if (actionMap[action]) actionMap[action](); else toast(`Prototype action: ${action}`);
+    }
+
+    function toast(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+    }
+
+    document.addEventListener("click", event => {
+      const target = event.target;
+      if (target.closest("[data-close-modal]") || target.id === "modalRoot") closeModal();
+      if (!target.closest(".branch-wrap")) closeBranchMenu();
+    });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") { closeModal(); closeBranchMenu(); } });
+    document.getElementById("branchTrigger").addEventListener("click", () => {
+      const trigger = document.getElementById("branchTrigger");
+      const menu = document.getElementById("branchMenu");
+      menu.hidden = !menu.hidden;
+      trigger.setAttribute("aria-expanded", String(!menu.hidden));
+    });
+    document.getElementById("mobileMenu").addEventListener("click", () => document.body.classList.toggle("nav-open"));
+    document.getElementById("notifyButton").addEventListener("click", () => toast("มี 3 งานที่ต้องตรวจ · lab risk, นัดรอยืนยัน และ DF review"));
+    document.getElementById("createButton").addEventListener("click", () => handleAction("create-appointment"));
+    document.getElementById("globalSearch").addEventListener("keydown", event => { if (event.key === "Enter" && event.target.value.trim()) toast(`ค้นหา “${event.target.value.trim()}” · prototype scope`); });
+
+    hydrateIcons(document);
+    updateBranchTrigger();
+    renderView();
+  </script>
+</body>
+</html>
