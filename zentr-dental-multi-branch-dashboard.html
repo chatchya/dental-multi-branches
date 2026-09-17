@@ -5,33 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Zentr Dental multi-branch control tower prototype">
   <title>Zentr Dental · Control Tower Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
   <style>
     :root {
-      --canvas: #f3f7f5;
+      --canvas: #eef1ef;
       --surface: #ffffff;
-      --surface-soft: #f8fbfa;
-      --ink: #16362e;
-      --ink-2: #315047;
-      --muted: #6b7c75;
-      --brand: #2d806d;
-      --brand-deep: #1f6656;
-      --brand-soft: #ddf4ec;
-      --mint: #c7ede2;
-      --warning: #b7791f;
-      --warning-soft: #fff3d7;
-      --danger: #b44c4c;
-      --danger-soft: #fbe9e7;
-      --info: #46739a;
-      --info-soft: #eaf2f8;
+      --surface-soft: #f5f8f6;
+      --ink: #112b25;
+      --ink-2: #2f463f;
+      --muted: #66776f;
+      --brand: #17604f;
+      --brand-deep: #0f4a3c;
+      --brand-soft: #e2ede9;
+      --mint: #bfe0d6;
+      --warning: #a9781f;
+      --warning-soft: #f8eed6;
+      --danger: #a9463d;
+      --danger-soft: #f6e4e1;
+      --info: #43708f;
+      --info-soft: #e9f0f5;
       --c-collect: #0d8768;
       --c-out: #c8871a;
-      --border: #dce6e1;
-      --border-strong: #c7d7d0;
-      --shadow: 0 16px 40px rgba(26, 58, 48, .07);
-      --shadow-soft: 0 8px 24px rgba(26, 58, 48, .05);
-      --radius-lg: 18px;
-      --radius-md: 13px;
-      --radius-sm: 9px;
+      --border: #dde5e1;
+      --border-strong: #c6d4ce;
+      --shadow: 0 18px 44px rgba(15, 40, 33, .09);
+      --shadow-soft: 0 6px 20px rgba(15, 40, 33, .06);
+      --radius-lg: 14px;
+      --radius-md: 10px;
+      --radius-sm: 7px;
       --focus: 0 0 0 3px rgba(45, 128, 109, .25);
     }
 
@@ -40,10 +43,14 @@
       margin: 0;
       color: var(--ink);
       background: var(--canvas);
-      font-family: "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+      font-family: "IBM Plex Sans Thai", "IBM Plex Sans", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
       font-size: 14px;
-      line-height: 1.55;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      font-variant-numeric: tabular-nums;
     }
+    h1, h2, h3 { letter-spacing: -.015em; }
+    .metric-value, .df-total, .finance-metric strong { font-feature-settings: "tnum" 1; letter-spacing: -.02em; }
     button, input, select { font: inherit; }
     button { cursor: pointer; }
     button:focus-visible, input:focus-visible, select:focus-visible {
@@ -762,7 +769,6 @@
         <div class="nav-label">ทำงาน</div>
         <nav class="nav-list">
           <button class="nav-item active" data-view="dashboard"><span class="nav-icon" data-icon="overview"></span><span>ภาพรวมเครือคลินิก</span></button>
-          <button class="nav-item" data-view="schedule"><span class="nav-icon" data-icon="calendar"></span><span>นัดหมายและคิว</span><span class="nav-count">4</span></button>
           <button class="nav-item" data-view="labs"><span class="nav-icon" data-icon="lab"></span><span>งานแล็บ</span><span class="nav-count">3</span></button>
           <button class="nav-item" data-view="inbox"><span class="nav-icon" data-icon="inbox"></span><span>Inbox</span><span class="nav-count">6</span></button>
         </nav>
